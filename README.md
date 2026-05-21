@@ -3,7 +3,7 @@
 > 纯浏览器端 HR 数据分析工具，上传 Excel 即可生成可视化图表与诊断报告。  
 > A browser-only HR analytics tool. Upload your Excel file to generate charts and diagnostic reports instantly.
 
-**[🚀 在线体验 Live Demo](https://你的用户名.github.io/hr-analytics-dashboard/)**
+**[🚀 在线体验 Live Demo](https://zgy0606.github.io/hr-analytics-dashboard/)**
 
 ---
 
