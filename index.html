@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="zh-CN" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR 智慧诊断平台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#2563EB;--primary-d:#1D4ED8;--success:#10B981;--warning:#F59E0B;--danger:#EF4444;--bg:#F1F5F9;--surface:#fff;--border:#E2E8F0;--text:#1E293B;--muted:#64748B;--sidebar:240px;--header:60px;--r:12px;--shadow:0 1px 3px rgba(0,0,0,.1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.hdr{height:var(--header);background:linear-gradient(135deg,#1D4ED8,#7C3AED);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hdr-logo{display:flex;align-items:center;gap:10px;color:#fff}
+.hdr-logo .ic{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.hdr-logo .lt{font-size:17px;font-weight:700}.hdr-logo .ls{color:rgba(255,255,255,.7);font-size:12px}
+.hdr-sp{flex:1}
+.hdr-date{color:rgba(255,255,255,.8);font-size:13px;margin-right:8px}
+.lang-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.lang-btn:hover{background:rgba(255,255,255,.25)}
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.sb-sec{padding:14px 10px 6px}.sb-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--muted);transition:all .15s;user-select:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}.nav-item.active{background:#EFF6FF;color:var(--primary);font-weight:600}
+.nav-item .ni{width:18px;text-align:center;flex-shrink:0}
+.nav-sub{padding-left:28px}.sb-div{height:1px;background:var(--border);margin:6px 10px}
+.main{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}.page.active{display:block}
+.action-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:var(--r);padding:11px 16px;border:1px solid var(--border);margin-bottom:16px;box-shadow:var(--shadow);flex-wrap:wrap;gap:8px}
+.action-bar-left{display:flex;align-items:center;gap:8px}
+.action-bar-right{display:flex;gap:8px;flex-wrap:wrap}
+.ab-title{font-size:14px;font-weight:600}
+.ab-file{font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600}.card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.card-body{padding:18px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--surface);border-radius:var(--r);padding:18px 16px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.kpi.ok{border-left:4px solid var(--success)}.kpi.warn{border-left:4px solid var(--warning)}.kpi.bad{border-left:4px solid var(--danger)}.kpi.blue{border-left:4px solid var(--primary)}
+.kpi-lbl{font-size:12px;color:var(--muted);margin-bottom:7px;font-weight:500}
+.kpi-val{font-size:26px;font-weight:700;line-height:1;margin-bottom:5px}
+.kpi.ok .kpi-val{color:var(--success)}.kpi.warn .kpi-val{color:var(--warning)}.kpi.bad .kpi-val{color:var(--danger)}.kpi.blue .kpi-val{color:var(--primary)}
+.kpi-tag{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-top:4px}
+.kpi-tag.ok{background:#D1FAE5;color:#065F46}.kpi-tag.warn{background:#FEF3C7;color:#92400E}.kpi-tag.bad{background:#FEE2E2;color:#991B1B}.kpi-tag.blue{background:#DBEAFE;color:#1E40AF}
+.kpi-hint{font-size:11px;color:var(--muted);margin-top:3px}
+.charts2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-wrap{position:relative;height:260px}.chart-wrap.h320{height:320px}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r);padding:40px;text-align:center;background:var(--bg);transition:all .2s}
+.upload-zone:hover{border-color:var(--primary);background:#EFF6FF}
+.upload-zone .ui{font-size:44px;margin-bottom:10px}
+.upload-zone h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.upload-zone p{font-size:13px;color:var(--muted);margin-bottom:14px}
+input[type=file]{display:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-d)}
+.btn-ghost{background:var(--bg);color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{background:var(--border)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab{padding:9px 18px;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.tbl-wrap{overflow-x:auto;max-height:340px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg);padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);position:sticky;top:0}
+td{padding:9px 12px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F8FAFC}
+tr.row-bad td{background:#FFF5F5}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.b-ok{background:#D1FAE5;color:#065F46}.b-warn{background:#FEF3C7;color:#92400E}.b-bad{background:#FEE2E2;color:#991B1B}.b-info{background:#E0E7FF;color:#3730A3}
+.alert{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:flex;gap:10px}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}.alert-body{flex:1}
+.alert-title{font-weight:600;margin-bottom:3px}
+.a-warn{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
+.a-bad{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.a-info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+.a-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.prog{height:7px;background:var(--bg);border-radius:4px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;transition:width .5s}
+.prog-ok{background:var(--success)}.prog-warn{background:var(--warning)}.prog-bad{background:var(--danger)}.prog-blue{background:var(--primary)}
+.funnel{display:flex;flex-direction:column;gap:10px;padding:8px 0}
+.funnel-row{display:flex;align-items:center;gap:10px}
+.funnel-lbl{width:72px;font-size:12px;color:var(--muted);text-align:right;flex-shrink:0}
+.funnel-bar-w{flex:1;height:34px;display:flex;align-items:center}
+.funnel-bar{height:34px;border-radius:6px;display:flex;align-items:center;padding:0 12px;color:#fff;font-size:13px;font-weight:600;transition:width .6s;min-width:50px}
+.funnel-num{width:50px;font-size:13px;font-weight:700;text-align:right;flex-shrink:0}
+.home-banner{background:linear-gradient(135deg,#1D4ED8,#7C3AED);border-radius:16px;padding:30px 36px;color:#fff;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between}
+.home-banner h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.home-banner p{font-size:13px;opacity:.85;line-height:1.6;max-width:480px}
+.home-banner .hb-icon{font-size:60px;opacity:.8}
+.module-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:760px}
+.mod-card{background:var(--surface);border-radius:16px;padding:28px;border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:center}
+.mod-card:hover{border-color:var(--primary);box-shadow:0 0 0 4px #BFDBFE;transform:translateY(-2px)}
+.mod-card .mc-icon{font-size:42px;margin-bottom:14px}
+.mod-card h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.mod-card p{font-size:12px;color:var(--muted);line-height:1.5}
+.mod-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.mod-tag{font-size:11px;padding:3px 8px;background:var(--bg);border-radius:4px;color:var(--muted)}
+.pg-title{font-size:20px;font-weight:700;margin-bottom:5px}
+.pg-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.score-bar{display:flex;align-items:center;gap:7px}
+.score-bar .prog{flex:1;height:5px}.score-num{width:30px;font-size:12px;font-weight:600;text-align:right}
+.thresh-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.thresh-item{background:var(--bg);border-radius:10px;padding:16px}
+.thresh-lbl{font-size:13px;font-weight:600;margin-bottom:4px}
+.thresh-desc{font-size:11px;color:var(--muted);margin-bottom:10px}
+.thresh-inp{display:flex;align-items:center;gap:8px}
+.thresh-inp input{width:70px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:15px;font-weight:700;text-align:center;background:#fff}
+.thresh-inp input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px #BFDBFE}
+.thresh-inp .unit{font-size:13px;color:var(--muted)}
+.insight-box{background:linear-gradient(135deg,#EFF6FF,#F0FDF4);border-radius:10px;padding:14px 16px;border:1px solid #BFDBFE;margin-bottom:16px}
+.insight-box h4{font-size:13px;font-weight:600;color:var(--primary);margin-bottom:8px}
+.insight-box ul{padding-left:16px}
+.insight-box li{font-size:12px;color:var(--text);margin-bottom:4px;line-height:1.5}
+.no-data-notice{padding:40px 20px;text-align:center;color:var(--muted)}
+.no-data-notice .ndi{font-size:30px;margin-bottom:8px}
+.no-data-notice .ndt{font-size:13px;font-weight:600}
+.no-data-notice .ndm{font-size:12px;margin-top:4px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* 组织健康分 */
+.health-score-display{text-align:center;padding:24px 20px}
+.health-score-num{font-size:68px;font-weight:800;line-height:1}
+.health-score-grade{font-size:20px;font-weight:700;margin-top:6px}
+.health-score-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.health-dim-list{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.health-dim-row{display:flex;align-items:center;gap:8px}
+.health-dim-lbl{width:80px;font-size:12px;color:var(--muted);flex-shrink:0}
+.health-dim-val{width:34px;font-size:12px;font-weight:700;text-align:right;flex-shrink:0}
+/* 人才画像 2×2 */
+.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.persona-quad{border-radius:10px;padding:16px;border:2px solid var(--border)}
+.pq-hh{background:#ECFDF5;border-color:#6EE7B7}
+.pq-hl{background:#EFF6FF;border-color:#93C5FD}
+.pq-lh{background:#FFFBEB;border-color:#FCD34D}
+.pq-ll{background:#FEF2F2;border-color:#FCA5A5}
+.persona-quad-icon{font-size:24px;margin-bottom:6px}
+.persona-quad-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.persona-quad-count{font-size:30px;font-weight:800;line-height:1.1}
+.persona-quad-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.persona-dept-hint{font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07)}
+/* 数据质量 */
+.dq-section-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px}
+.dq-row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.dq-field{width:110px;font-size:12px;flex-shrink:0}
+.dq-bar-w{flex:1}
+.dq-pct{width:42px;font-size:12px;font-weight:600;text-align:right;flex-shrink:0}
+.dq-issue-list{margin:0;padding-left:18px}
+.dq-issue-list li{font-size:12px;margin-bottom:3px}
+.dq-ok{color:var(--success);font-size:13px;font-weight:500}
+/* 组织报告 */
+.org-report{font-size:13px;line-height:1.85;color:var(--text)}
+.org-report h5{font-size:13px;font-weight:700;color:var(--primary);margin:16px 0 6px;display:flex;align-items:center;gap:6px}
+.org-report h5:first-child{margin-top:0}
+.org-report ul{padding-left:18px;margin:0}
+.org-report li{margin-bottom:5px}
+.org-report .num{font-weight:700;color:var(--primary)}
+.org-report .ok-text{color:var(--success);font-weight:600}
+.org-report .warn-text{color:var(--danger);font-weight:600}
+.org-report .score-chip{display:inline-block;padding:2px 10px;border-radius:20px;font-weight:700;font-size:13px;margin-left:6px}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="ic">📊</div>
+    <div><div class="lt" data-i18n="title">HR 智慧诊断平台</div><div class="ls" data-i18n="subtitle">Human Resources Analytics Dashboard</div></div>
+  </div>
+  <div class="hdr-sp"></div>
+  <div class="hdr-date" id="hdr-date"></div>
+  <button class="lang-btn" onclick="toggleLang()" id="lang-btn">English</button>
+</header>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="sb-sec">
+    <div class="sb-lbl" data-i18n="nav.section1">导航</div>
+    <div class="nav-item active" onclick="showPage('home')" id="nav-home"><span class="ni">🏠</span><span data-i18n="nav.home">首页概览</span></div>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-sec">
+    <div class="sb-lbl" data-i18n="nav.section2">招聘分析</div>
+    <div class="nav-item" onclick="showPage('recruit')" id="nav-recruit"><span class="ni">📋</span><span data-i18n="nav.recruit">招聘数据分析</span></div>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-sec">
+    <div class="sb-lbl" data-i18n="nav.section3">员工分析</div>
+    <div class="nav-item" onclick="showPage('emp')" id="nav-emp"><span class="ni">👥</span><span data-i18n="nav.emp">员工数据分析</span></div>
+    <div class="nav-item nav-sub" onclick="showPage('emp');switchEmpTab('planning')" id="nav-planning"><span class="ni">📐</span><span data-i18n="nav.planning">人力规划</span></div>
+    <div class="nav-item nav-sub" onclick="showPage('emp');switchEmpTab('perf')" id="nav-perf"><span class="ni">🎯</span><span data-i18n="nav.perf">绩效管理</span></div>
+    <div class="nav-item nav-sub" onclick="showPage('emp');switchEmpTab('comp')" id="nav-comp"><span class="ni">💰</span><span data-i18n="nav.comp">薪酬福利</span></div>
+    <div class="nav-item nav-sub" onclick="showPage('emp');switchEmpTab('diag')" id="nav-diag"><span class="ni">🔬</span><span data-i18n="nav.diag">诊断报告</span></div>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-sec">
+    <div class="sb-lbl" data-i18n="nav.section4">系统</div>
+    <div class="nav-item" onclick="showPage('settings')" id="nav-settings"><span class="ni">⚙️</span><span data-i18n="nav.settings">阈值设置</span></div>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="home-banner">
+    <div>
+      <h2 data-i18n="home.title">HR 智慧诊断平台</h2>
+      <p data-i18n="home.desc">上传 Excel 数据，自动生成可视化图表与诊断报告。支持招聘漏斗分析、人员结构洞察、绩效分层诊断、薪酬成本分析，助力科学决策。</p>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="showPage('recruit')">📋 <span data-i18n="nav.recruit">招聘数据分析</span></button>
+        <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="showPage('emp')">👥 <span data-i18n="nav.emp">员工数据分析</span></button>
+      </div>
+    </div>
+    <div class="hb-icon">🧩</div>
+  </div>
+  <div class="module-grid">
+    <div class="mod-card" onclick="showPage('recruit')">
+      <div class="mc-icon">📋</div>
+      <h3 data-i18n="home.m1.title">招聘数据分析</h3>
+      <p data-i18n="home.m1.desc">分析招聘漏斗各环节转化率，识别到岗率、留任率等核心指标，洞察人才画像结构</p>
+      <div class="mod-tags"><span class="mod-tag" data-i18n="tag.funnel">漏斗分析</span><span class="mod-tag" data-i18n="tag.arrival">到岗率</span><span class="mod-tag" data-i18n="tag.retain">留任率</span><span class="mod-tag" data-i18n="tag.channel">渠道效果</span></div>
+    </div>
+    <div class="mod-card" onclick="showPage('emp')">
+      <div class="mc-icon">👥</div>
+      <h3 data-i18n="home.m2.title">员工数据分析</h3>
+      <p data-i18n="home.m2.desc">涵盖人力规划、绩效管理、薪酬福利三大板块，全面诊断组织健康度</p>
+      <div class="mod-tags"><span class="mod-tag" data-i18n="tag.structure">人员结构</span><span class="mod-tag" data-i18n="tag.turnover">离职率</span><span class="mod-tag" data-i18n="tag.perfm">绩效分层</span><span class="mod-tag" data-i18n="tag.cost">人力成本</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-title">📌 <span data-i18n="home.guide">使用说明</span></div></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div><div style="font-size:13px;font-weight:600;margin-bottom:8px" data-i18n="home.guide.r">招聘数据 Excel 所需列名：</div><div style="font-size:12px;color:var(--muted);line-height:1.8" data-i18n="home.guide.r.cols">姓名、性别（男/女）、年龄、学历<br>应聘部门、应聘岗位、招聘渠道<br>投递日期、是否面试（是/否）、面试结果（通过/未通过）<br>是否录用（是/否）、实际到岗日期、是否在职（是/否）</div></div>
+        <div><div style="font-size:13px;font-weight:600;margin-bottom:8px" data-i18n="home.guide.e">员工数据 Excel 所需列名：</div><div style="font-size:12px;color:var(--muted);line-height:1.8" data-i18n="home.guide.e.cols">员工编号、姓名、性别、年龄、学历、部门、岗位<br>入职日期、在职状态（在职/离职）、离职日期<br>绩效评分（0-100）、绩效等级（A/B/C/D）<br>基本工资、绩效奖金、公司社保、公司公积金、其他福利</div></div>
+      </div>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--muted)" data-i18n="home.tip">💡 提示：无需严格对应列名顺序，系统自动识别。若列名缺失，对应图表自动跳过。可点击"使用演示数据"快速体验。</div>
+    </div>
+  </div>
+</div>
+
+<!-- RECRUIT -->
+<div class="page" id="page-recruit">
+  <div class="pg-title" data-i18n="recruit.title">招聘数据分析</div>
+  <div class="pg-sub" data-i18n="recruit.sub">上传招聘数据 Excel，分析漏斗转化、人才画像及渠道效果</div>
+
+  <!-- Action bar (always visible after data loads) -->
+  <div class="action-bar" id="r-action" style="display:none">
+    <div class="action-bar-left">
+      <div class="ab-title" data-i18n="recruit.title">招聘数据分析</div>
+      <div class="ab-file" id="r-file-label"></div>
+    </div>
+    <div class="action-bar-right">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('r-file2').click()">📁 <span data-i18n="btn.upload">上传新文件</span></button>
+      <input type="file" id="r-file2" accept=".xlsx,.xls" onchange="handleFile(event,'recruit')">
+      <button class="btn btn-ghost btn-sm" onclick="loadRecruitDemo()">🎭 <span data-i18n="btn.demo">演示数据</span></button>
+    </div>
+  </div>
+
+  <!-- Upload (shown when no data) -->
+  <div class="card" id="recruit-upload-card">
+    <div class="card-body">
+      <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event,'recruit')">
+        <div class="ui">📂</div>
+        <h3 data-i18n="upload.title">点击上传 或 拖拽 Excel 文件</h3>
+        <p data-i18n="upload.desc">支持 .xlsx / .xls 格式，数据仅在本地浏览器处理，不上传服务器</p>
+        <input type="file" id="r-file" accept=".xlsx,.xls" onchange="handleFile(event,'recruit')">
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="document.getElementById('r-file').click()">📁 <span data-i18n="btn.choose">选择文件</span></button>
+          <button class="btn btn-ghost" onclick="loadRecruitDemo()">🎭 <span data-i18n="btn.demo">使用演示数据</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="recruit-dashboard" style="display:none">
+    <div id="recruit-alerts"></div>
+    <div class="kpi-grid" id="recruit-kpis"></div>
+    <div class="charts2">
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.funnel">招聘漏斗</div></div><div class="card-body" id="cb-funnel"></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.channel">渠道效果分析</div></div><div class="card-body" id="cb-channel-r"><div class="chart-wrap"><canvas id="ch-channel"></canvas></div></div></div>
+    </div>
+    <div class="charts2">
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.dept.r">部门招聘分布</div></div><div class="card-body" id="cb-dept-r"><div class="chart-wrap"><canvas id="ch-dept-r"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.gender">性别结构</div></div><div class="card-body" id="cb-gender-r"><div class="chart-wrap"><canvas id="ch-gender-r"></canvas></div></div></div>
+    </div>
+    <div class="charts2">
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.age">年龄分布</div></div><div class="card-body" id="cb-age-r"><div class="chart-wrap"><canvas id="ch-age-r"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.edu">学历结构</div></div><div class="card-body" id="cb-edu-r"><div class="chart-wrap"><canvas id="ch-edu-r"></canvas></div></div></div>
+    </div>
+    <div class="insight-box" id="recruit-insight"></div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-hd"><div class="card-title" data-i18n="chart.dq.r">招聘数据质量</div></div>
+      <div class="card-body" id="cb-r-dq"></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-hd"><div><div class="card-title" data-i18n="chart.channel.conv">渠道转化效率</div><div class="card-sub" data-i18n="chart.channel.conv.sub">各渠道面试通过率与录用率对比</div></div></div>
+      <div class="card-body" id="cb-channel-conv"><div class="chart-wrap h320"><canvas id="ch-channel-conv"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title" data-i18n="tbl.dept.r">各部门招聘明细</div></div>
+      <div class="card-body"><div class="tbl-wrap"><table id="tbl-dept-r"></table></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE -->
+<div class="page" id="page-emp">
+  <div class="pg-title" data-i18n="emp.title">员工数据分析</div>
+  <div class="pg-sub" data-i18n="emp.sub">上传员工数据 Excel，涵盖人力规划、绩效管理、薪酬福利三大模块</div>
+
+  <div class="action-bar" id="e-action" style="display:none">
+    <div class="action-bar-left">
+      <div class="ab-title" data-i18n="emp.title">员工数据分析</div>
+      <div class="ab-file" id="e-file-label"></div>
+    </div>
+    <div class="action-bar-right">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('e-file2').click()">📁 <span data-i18n="btn.upload">上传新文件</span></button>
+      <input type="file" id="e-file2" accept=".xlsx,.xls" onchange="handleFile(event,'emp')">
+      <button class="btn btn-ghost btn-sm" onclick="loadEmpDemo()">🎭 <span data-i18n="btn.demo">演示数据</span></button>
+    </div>
+  </div>
+
+  <div class="card" id="emp-upload-card">
+    <div class="card-body">
+      <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event,'emp')">
+        <div class="ui">👥</div>
+        <h3 data-i18n="upload.title">点击上传 或 拖拽 Excel 文件</h3>
+        <p data-i18n="upload.desc">支持 .xlsx / .xls 格式，数据仅在本地浏览器处理，不上传服务器</p>
+        <input type="file" id="e-file" accept=".xlsx,.xls" onchange="handleFile(event,'emp')">
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="document.getElementById('e-file').click()">📁 <span data-i18n="btn.choose">选择文件</span></button>
+          <button class="btn btn-ghost" onclick="loadEmpDemo()">🎭 <span data-i18n="btn.demo">使用演示数据</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="emp-dashboard" style="display:none">
+    <div class="tabs">
+      <div class="tab active" onclick="switchEmpTab('planning')" id="tab-planning" data-i18n="tab.planning">人力规划</div>
+      <div class="tab" onclick="switchEmpTab('perf')" id="tab-perf" data-i18n="tab.perf">绩效管理</div>
+      <div class="tab" onclick="switchEmpTab('comp')" id="tab-comp" data-i18n="tab.comp">薪酬福利</div>
+      <div class="tab" onclick="switchEmpTab('diag')" id="tab-diag" data-i18n="tab.diag">诊断报告</div>
+    </div>
+    <!-- Planning -->
+    <div class="tab-pane active" id="pane-planning">
+      <div id="emp-alerts"></div>
+      <div class="kpi-grid" id="emp-kpis"></div>
+      <div class="charts2">
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.dept.e">部门人员分布</div></div><div class="card-body" id="cb-dept-e"><div class="chart-wrap"><canvas id="ch-dept-e"></canvas></div></div></div>
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.struct">人员结构（性别）</div></div><div class="card-body" id="cb-struct-e"><div class="chart-wrap"><canvas id="ch-struct-e"></canvas></div></div></div>
+      </div>
+      <div class="charts2">
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.age.e">年龄分布</div></div><div class="card-body" id="cb-age-e"><div class="chart-wrap"><canvas id="ch-age-e"></canvas></div></div></div>
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.tenure">司龄分布</div></div><div class="card-body" id="cb-tenure-e"><div class="chart-wrap"><canvas id="ch-tenure-e"></canvas></div></div></div>
+      </div>
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="tbl.dept.e">部门人力配置明细</div></div><div class="card-body"><div class="tbl-wrap"><table id="tbl-dept-e"></table></div></div></div>
+    </div>
+    <!-- Performance -->
+    <div class="tab-pane" id="pane-perf">
+      <div class="kpi-grid" id="perf-kpis"></div>
+      <div class="charts2">
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.perf.dist">绩效分布直方图</div></div><div class="card-body" id="cb-perf-dist"><div class="chart-wrap"><canvas id="ch-perf-dist"></canvas></div></div></div>
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.perf.level">绩效等级构成</div></div><div class="card-body" id="cb-perf-level"><div class="chart-wrap"><canvas id="ch-perf-level"></canvas></div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px"><div class="card-hd"><div><div class="card-title" data-i18n="chart.dept.perf">各部门平均绩效</div><div class="card-sub" data-i18n="chart.dept.perf.sub">红线为企业平均值</div></div></div><div class="card-body" id="cb-dept-perf"><div class="chart-wrap h320"><canvas id="ch-dept-perf"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-i18n="tbl.perf.warn">绩效预警名单</div><div class="card-sub" id="perf-warn-sub"></div></div></div><div class="card-body"><div class="tbl-wrap"><table id="tbl-perf-warn"></table></div></div></div>
+    </div>
+    <!-- Compensation -->
+    <div class="tab-pane" id="pane-comp">
+      <div class="kpi-grid" id="comp-kpis"></div>
+      <div class="charts2">
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.cost.pie">人力成本构成</div></div><div class="card-body" id="cb-cost-pie"><div class="chart-wrap"><canvas id="ch-cost-pie"></canvas></div></div></div>
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.salary.dept">各部门平均薪酬</div></div><div class="card-body" id="cb-salary-dept"><div class="chart-wrap"><canvas id="ch-salary-dept"></canvas></div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px"><div class="card-hd"><div class="card-title" data-i18n="chart.salary.dist">薪酬区间分布</div></div><div class="card-body" id="cb-salary-dist"><div class="chart-wrap"><canvas id="ch-salary-dist"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title" data-i18n="tbl.comp">各部门成本明细</div></div><div class="card-body"><div class="tbl-wrap"><table id="tbl-comp"></table></div></div></div>
+    </div>
+    <!-- Diagnostics -->
+    <div class="tab-pane" id="pane-diag">
+      <div class="charts2">
+        <div class="card"><div class="card-hd"><div><div class="card-title" data-i18n="chart.risk.radar">组织风险雷达</div><div class="card-sub" data-i18n="chart.risk.radar.sub">5维组织健康扫描</div></div></div><div class="card-body" id="cb-risk-radar"><div class="chart-wrap"><canvas id="ch-risk-radar"></canvas></div></div></div>
+        <div class="card"><div class="card-hd"><div class="card-title" data-i18n="chart.org.health">组织健康得分</div></div><div class="card-body" id="cb-org-health"></div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-hd"><div><div class="card-title" data-i18n="chart.persona">员工群体画像</div><div class="card-sub" data-i18n="chart.persona.sub">绩效 × 司龄 四象限</div></div></div>
+        <div class="card-body">
+          <div id="persona-kpis"></div>
+          <div id="persona-table-wrap" style="margin-top:16px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-hd"><div class="card-title" data-i18n="chart.dq">数据质量诊断</div></div>
+        <div class="card-body" id="cb-dq"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title" data-i18n="chart.org.report">组织健康分析报告</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyOrgReport()" id="btn-copy-report">📋 <span data-i18n="btn.copy">复制报告</span></button>
+        </div>
+        <div class="card-body">
+          <div class="org-report" id="org-report-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="pg-title" data-i18n="settings.title">阈值设置</div>
+  <div class="pg-sub" data-i18n="settings.sub">自定义各指标的警戒阈值，系统将据此进行自动诊断与标记</div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-hd"><div class="card-title" data-i18n="settings.r">招聘模块阈值</div></div>
+    <div class="card-body">
+      <div class="thresh-grid">
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.arrival">到岗率警戒值</div><div class="thresh-desc" data-i18n="th.arrival.d">低于此值时显示红色警告</div><div class="thresh-inp"><input type="number" id="th-arrival" value="80" min="0" max="100"><span class="unit">%</span></div></div>
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.retain">留任率警戒值</div><div class="thresh-desc" data-i18n="th.retain.d">低于此值时显示橙色警告</div><div class="thresh-inp"><input type="number" id="th-retain" value="85" min="0" max="100"><span class="unit">%</span></div></div>
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.interview">面试通过率警戒值</div><div class="thresh-desc" data-i18n="th.interview.d">低于此值时提示效率偏低</div><div class="thresh-inp"><input type="number" id="th-interview" value="50" min="0" max="100"><span class="unit">%</span></div></div>
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.hire">录用率警戒值</div><div class="thresh-desc" data-i18n="th.hire.d">低于此值时提示筛选偏严</div><div class="thresh-inp"><input type="number" id="th-hire" value="60" min="0" max="100"><span class="unit">%</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-hd"><div class="card-title" data-i18n="settings.e">员工模块阈值</div></div>
+    <div class="card-body">
+      <div class="thresh-grid">
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.turnover">离职率警戒值</div><div class="thresh-desc" data-i18n="th.turnover.d">高于此值时显示红色警告</div><div class="thresh-inp"><input type="number" id="th-turnover" value="15" min="0" max="100"><span class="unit">%</span></div></div>
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.perf">绩效预警分数线</div><div class="thresh-desc" data-i18n="th.perf.d">低于此分数的员工进入预警名单</div><div class="thresh-inp"><input type="number" id="th-perf" value="60" min="0" max="100"><span class="unit" data-i18n="unit.score">分</span></div></div>
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.deptperf">部门绩效平均线</div><div class="thresh-desc" data-i18n="th.deptperf.d">低于此值的部门标红</div><div class="thresh-inp"><input type="number" id="th-dept-perf" value="70" min="0" max="100"><span class="unit" data-i18n="unit.score">分</span></div></div>
+        <div class="thresh-item"><div class="thresh-lbl" data-i18n="th.salary">薪酬差异警戒比</div><div class="thresh-desc" data-i18n="th.salary.d">最高/最低部门薪酬超过此倍数时预警</div><div class="thresh-inp"><input type="number" id="th-salary-ratio" value="2.5" min="1" max="10" step="0.1"><span class="unit" data-i18n="unit.times">倍</span></div></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="applyThresholds()">✅ <span data-i18n="btn.apply">应用设置并重新分析</span></button>
+</div>
+
+</main>
+</div>
+
+<script>
+// ═══ I18N ═══
+const I18N = {
+zh:{
+  'title':'HR 智慧诊断平台','subtitle':'Human Resources Analytics Dashboard','lang.btn':'English',
+  'nav.section1':'导航','nav.section2':'招聘分析','nav.section3':'员工分析','nav.section4':'系统',
+  'nav.home':'首页概览','nav.recruit':'招聘数据分析','nav.emp':'员工数据分析',
+  'nav.planning':'人力规划','nav.perf':'绩效管理','nav.comp':'薪酬福利','nav.diag':'诊断报告','nav.settings':'阈值设置',
+  'home.title':'HR 智慧诊断平台','home.desc':'上传 Excel 数据，自动生成可视化图表与诊断报告。支持招聘漏斗分析、人员结构洞察、绩效分层诊断、薪酬成本分析，助力科学决策。',
+  'home.m1.title':'招聘数据分析','home.m1.desc':'分析招聘漏斗各环节转化率，识别到岗率、留任率等核心指标，洞察人才画像结构',
+  'home.m2.title':'员工数据分析','home.m2.desc':'涵盖人力规划、绩效管理、薪酬福利三大板块，全面诊断组织健康度',
+  'home.guide':'使用说明','home.guide.r':'招聘数据 Excel 所需列名：','home.guide.e':'员工数据 Excel 所需列名：',
+  'home.guide.r.cols':'姓名、性别（男/女）、年龄、学历<br>应聘部门、应聘岗位、招聘渠道<br>投递日期、是否面试（是/否）、面试结果（通过/未通过）<br>是否录用（是/否）、实际到岗日期、是否在职（是/否）',
+  'home.guide.e.cols':'员工编号、姓名、性别、年龄、学历、部门、岗位<br>入职日期、在职状态（在职/离职）、离职日期<br>绩效评分（0-100）、绩效等级（A/B/C/D）<br>基本工资、绩效奖金、公司社保、公司公积金、其他福利',
+  'home.tip':'💡 提示：无需严格对应列名顺序，系统自动识别。若列名缺失，对应图表自动跳过。可点击"使用演示数据"快速体验。',
+  'tag.funnel':'漏斗分析','tag.arrival':'到岗率','tag.retain':'留任率','tag.channel':'渠道效果',
+  'tag.structure':'人员结构','tag.turnover':'离职率','tag.perfm':'绩效分层','tag.cost':'人力成本',
+  'recruit.title':'招聘数据分析','recruit.sub':'上传招聘数据 Excel，分析漏斗转化、人才画像及渠道效果',
+  'emp.title':'员工数据分析','emp.sub':'上传员工数据 Excel，涵盖人力规划、绩效管理、薪酬福利三大模块',
+  'tab.planning':'人力规划','tab.perf':'绩效管理','tab.comp':'薪酬福利','tab.diag':'诊断报告',
+  'upload.title':'点击上传 或 拖拽 Excel 文件','upload.desc':'支持 .xlsx / .xls 格式，数据仅在本地浏览器处理，不上传服务器',
+  'btn.choose':'选择文件','btn.demo':'使用演示数据','btn.upload':'上传新文件',
+  'btn.apply':'应用设置并重新分析','btn.copy':'复制报告',
+  'chart.funnel':'招聘漏斗','chart.channel':'渠道效果分析','chart.dept.r':'部门招聘分布',
+  'chart.gender':'性别结构','chart.age':'年龄分布','chart.edu':'学历结构',
+  'chart.dept.e':'部门人员分布','chart.struct':'人员结构（性别）','chart.age.e':'年龄分布','chart.tenure':'司龄分布',
+  'chart.perf.dist':'绩效分布直方图','chart.perf.level':'绩效等级构成','chart.dept.perf':'各部门平均绩效','chart.dept.perf.sub':'红线为企业平均值',
+  'chart.cost.pie':'人力成本构成','chart.salary.dept':'各部门平均薪酬','chart.salary.dist':'薪酬区间分布',
+  'chart.risk.radar':'组织风险雷达','chart.risk.radar.sub':'5维组织健康扫描',
+  'chart.org.health':'组织健康得分','chart.persona':'员工群体画像','chart.persona.sub':'绩效 × 司龄 四象限',
+  'chart.dq':'数据质量诊断','chart.org.report':'组织健康分析报告',
+  'chart.dq.r':'招聘数据质量','chart.channel.conv':'渠道转化效率','chart.channel.conv.sub':'各渠道面试通过率与录用率对比',
+  'persona.hh':'核心骨干','persona.hl':'潜力新星','persona.lh':'待激活','persona.ll':'需观察',
+  'persona.hh.desc':'高绩效 · 长司龄','persona.hl.desc':'高绩效 · 短司龄','persona.lh.desc':'低绩效 · 长司龄','persona.ll.desc':'低绩效 · 短司龄',
+  'radar.dim1':'留任健康','radar.dim2':'绩效水平','radar.dim3':'梯队活力','radar.dim4':'人才保留','radar.dim5':'数据质量',
+  'health.grade.a':'优秀','health.grade.b':'良好','health.grade.c':'一般','health.grade.d':'待改善',
+  'report.strength':'✅ 主要优势','report.risk':'⚠️ 主要风险','report.action':'💡 建议措施',
+  'dq.missing.fields':'字段填充率','dq.abnormal':'异常数据','dq.all.ok':'✅ 数据质量良好，未发现明显异常',
+  'tbl.dept.r':'各部门招聘明细','tbl.dept.e':'部门人力配置明细','tbl.perf.warn':'绩效预警名单','tbl.comp':'各部门成本明细',
+  'kpi.apps':'投递总量','kpi.irate':'面试通过率','kpi.hrate':'录用率','kpi.arate':'到岗率','kpi.rrate':'留任率',
+  'kpi.active':'在职总人数','kpi.left':'离职人数','kpi.turnover':'离职率','kpi.depts':'部门数量',
+  'kpi.avgperf':'平均绩效分','kpi.agrade':'A级优秀员工','kpi.cdgrade':'C+D低效员工','kpi.perfwarn':'绩效预警人数',
+  'kpi.cost':'月度人力总成本','kpi.avgbase':'人均基本工资','kpi.avgtotal':'人均总人力成本','kpi.baseratio':'薪酬占成本比',
+  'f.apps':'投递','f.interview':'面试','f.pass':'通过','f.hired':'录用','f.arrived':'到岗','f.retained':'留任',
+  'g.male':'男','g.female':'女',
+  'age.u25':'22-25岁','age.26':'26-30岁','age.31':'31-35岁','age.36':'36-40岁','age.41':'41岁+',
+  'ten.u1':'<1年','ten.12':'1-2年','ten.23':'2-3年','ten.35':'3-5年','ten.5':'5年+',
+  'edu.a':'大专','edu.b':'本科','edu.m':'硕士','edu.d':'博士',
+  'plv.a':'A级','plv.b':'B级','plv.c':'C级','plv.d':'D级',
+  'cost.base':'基本工资','cost.bonus':'绩效奖金','cost.soc':'公司社保','cost.fund':'公司公积金','cost.other':'其他福利',
+  'status.ok':'正常','status.warn':'偏低','status.bad':'预警','thresh.label':'警戒线',
+  'col.dept':'部门','col.name':'姓名','col.pos':'岗位','col.score':'绩效分','col.grade':'等级',
+  'col.apps':'投递量','col.hired':'录用人数','col.arate':'到岗率','col.rrate':'留任率',
+  'col.active':'在职人数','col.female':'女性占比','col.avgage':'平均年龄','col.turnover':'离职率',
+  'col.avgbase':'平均基薪','col.totalcost':'月度总成本','col.ratio':'成本占比',
+  'col.headcount':'人数','col.count':'数量',
+  'alert.ok':'各项招聘指标均在正常范围内','alert.ok.msg':'继续保持当前招聘策略。',
+  'alert.arrival.t':'到岗率偏低','alert.arrival.m':'建议审查Offer流程、入职体验及竞争对手薪酬水平，缩短Offer承诺与到岗之间的时间差。',
+  'alert.retain.t':'留任率预警','alert.retain.m':'建议加强试用期管理和导师制度，重点排查高流失部门的管理与工作环境问题。',
+  'alert.interview.t':'面试通过率偏低','alert.interview.m':'简历筛选标准可能过于宽泛，建议优化JD描述，提高简历初筛精准度。',
+  'alert.turnover.t':'离职率偏高','alert.turnover.m':'建议重点排查高离职率部门，开展离职访谈分析，改善管理与薪酬结构。',
+  'alert.salary.t':'薪酬差异过大','alert.salary.m':'最高薪资部门与最低薪资部门差异超过阈值，建议审视薪酬体系公平性。',
+  'insight.title':'🔍 智能诊断摘要',
+  'missing.title':'字段缺失','missing.msg':'该图表所需字段在数据中未找到，请检查Excel列名',
+  'na':'N/A',
+  'settings.title':'阈值设置','settings.sub':'自定义各指标的警戒阈值，系统将据此进行自动诊断与标记',
+  'settings.r':'招聘模块阈值','settings.e':'员工模块阈值',
+  'th.arrival':'到岗率警戒值','th.arrival.d':'低于此值时显示红色警告',
+  'th.retain':'留任率警戒值','th.retain.d':'低于此值时显示橙色警告',
+  'th.interview':'面试通过率警戒值','th.interview.d':'低于此值时提示效率偏低',
+  'th.hire':'录用率警戒值','th.hire.d':'低于此值时提示筛选偏严',
+  'th.turnover':'离职率警戒值','th.turnover.d':'高于此值时显示红色警告',
+  'th.perf':'绩效预警分数线','th.perf.d':'低于此分数的员工进入预警名单',
+  'th.deptperf':'部门绩效平均线','th.deptperf.d':'低于此值的部门标红',
+  'th.salary':'薪酬差异警戒比','th.salary.d':'最高/最低部门薪酬超过此倍数时预警',
+  'unit.score':'分','unit.times':'倍',
+  'perf.warn.of':'人低于','perf.warn.pts':'分'
+},
+en:{
+  'title':'HR Analytics Platform','subtitle':'Human Resources Analytics Dashboard','lang.btn':'中文',
+  'nav.section1':'Navigation','nav.section2':'Recruitment','nav.section3':'Employees','nav.section4':'System',
+  'nav.home':'Overview','nav.recruit':'Recruitment Analysis','nav.emp':'Employee Analysis',
+  'nav.planning':'HR Planning','nav.perf':'Performance','nav.comp':'Compensation','nav.diag':'Diagnostics','nav.settings':'Settings',
+  'home.title':'HR Analytics Platform','home.desc':'Upload Excel data to automatically generate visual charts and diagnostic reports. Supports recruitment funnel, organizational insights, performance diagnostics, and compensation analysis.',
+  'home.m1.title':'Recruitment Analysis','home.m1.desc':'Analyze recruitment funnel conversion rates, identify onboarding and retention KPIs, and gain talent profile insights',
+  'home.m2.title':'Employee Analysis','home.m2.desc':'Covers HR Planning, Performance Management, and Compensation — a full organizational health diagnostic',
+  'home.guide':'Usage Guide','home.guide.r':'Required Recruitment Excel Columns:','home.guide.e':'Required Employee Excel Columns:',
+  'home.guide.r.cols':'Name, Gender (Male/Female), Age, Education<br>Dept Applied, Position, Recruitment Channel<br>Apply Date, Interviewed (Y/N), Interview Result (Pass/Fail)<br>Hired (Y/N), Actual Start Date, Still Employed (Y/N)',
+  'home.guide.e.cols':'Employee ID, Name, Gender, Age, Education, Dept, Position<br>Join Date, Status (Active/Left), Leave Date<br>Performance Score (0-100), Grade (A/B/C/D)<br>Base Salary, Bonus, Company Social Insurance, Housing Fund, Other Benefits',
+  'home.tip':'💡 Tip: Column order does not need to match exactly — the system auto-detects. Missing columns are skipped gracefully. Click "Use Demo Data" to explore features instantly.',
+  'tag.funnel':'Funnel','tag.arrival':'Onboarding Rate','tag.retain':'Retention Rate','tag.channel':'Channel Analysis',
+  'tag.structure':'Headcount','tag.turnover':'Turnover','tag.perfm':'Performance','tag.cost':'Labor Cost',
+  'recruit.title':'Recruitment Analysis','recruit.sub':'Upload recruitment Excel to analyze funnel conversion, candidate profiles, and channel effectiveness',
+  'emp.title':'Employee Analysis','emp.sub':'Upload employee Excel covering HR Planning, Performance Management, and Compensation',
+  'tab.planning':'HR Planning','tab.perf':'Performance','tab.comp':'Compensation','tab.diag':'Diagnostics',
+  'upload.title':'Click to upload or drag & drop Excel file','upload.desc':'Supports .xlsx / .xls format. Data is processed locally in your browser.',
+  'btn.choose':'Choose File','btn.demo':'Use Demo Data','btn.upload':'Upload New File',
+  'btn.apply':'Apply & Re-analyze','btn.copy':'Copy Report',
+  'chart.funnel':'Recruitment Funnel','chart.channel':'Channel Analysis','chart.dept.r':'Dept. Applications',
+  'chart.gender':'Gender Structure','chart.age':'Age Distribution','chart.edu':'Education Level',
+  'chart.dept.e':'Headcount by Dept.','chart.struct':'Gender by Dept.','chart.age.e':'Age Distribution','chart.tenure':'Tenure Distribution',
+  'chart.perf.dist':'Score Distribution','chart.perf.level':'Grade Breakdown','chart.dept.perf':'Avg Score by Dept.','chart.dept.perf.sub':'Red line = company average',
+  'chart.cost.pie':'Cost Composition','chart.salary.dept':'Avg Salary by Dept.','chart.salary.dist':'Salary Range Distribution',
+  'chart.risk.radar':'Org Risk Radar','chart.risk.radar.sub':'5-dimension health scan',
+  'chart.org.health':'Org Health Score','chart.persona':'Talent Persona Matrix','chart.persona.sub':'Performance × Tenure 2×2',
+  'chart.dq':'Data Quality Diagnostics','chart.org.report':'Org Health Report',
+  'chart.dq.r':'Recruitment Data Quality','chart.channel.conv':'Channel Conversion','chart.channel.conv.sub':'Interview pass rate & hire rate by channel',
+  'persona.hh':'Core Pillars','persona.hl':'Rising Stars','persona.lh':'Dormant Veterans','persona.ll':'Under Review',
+  'persona.hh.desc':'High perf · Long tenure','persona.hl.desc':'High perf · Short tenure','persona.lh.desc':'Low perf · Long tenure','persona.ll.desc':'Low perf · Short tenure',
+  'radar.dim1':'Retention','radar.dim2':'Performance','radar.dim3':'Talent Pipeline','radar.dim4':'Top Talent Retention','radar.dim5':'Data Quality',
+  'health.grade.a':'Excellent','health.grade.b':'Good','health.grade.c':'Fair','health.grade.d':'Needs Work',
+  'report.strength':'✅ Key Strengths','report.risk':'⚠️ Key Risks','report.action':'💡 Recommended Actions',
+  'dq.missing.fields':'Field Fill Rate','dq.abnormal':'Data Anomalies','dq.all.ok':'✅ Data quality looks good',
+  'tbl.dept.r':'Dept. Recruitment Details','tbl.dept.e':'Dept. Headcount Details','tbl.perf.warn':'Performance Alert List','tbl.comp':'Dept. Cost Details',
+  'kpi.apps':'Total Applications','kpi.irate':'Interview Pass Rate','kpi.hrate':'Hire Rate','kpi.arate':'Onboarding Rate','kpi.rrate':'Retention Rate',
+  'kpi.active':'Active Employees','kpi.left':'Departed','kpi.turnover':'Turnover Rate','kpi.depts':'Departments',
+  'kpi.avgperf':'Avg Performance','kpi.agrade':'Grade A (Top)','kpi.cdgrade':'Grade C+D (Low)','kpi.perfwarn':'Performance Alerts',
+  'kpi.cost':'Monthly Labor Cost','kpi.avgbase':'Avg Base Salary','kpi.avgtotal':'Avg Total Cost','kpi.baseratio':'Base/Cost Ratio',
+  'f.apps':'Applied','f.interview':'Interview','f.pass':'Passed','f.hired':'Hired','f.arrived':'Arrived','f.retained':'Retained',
+  'g.male':'Male','g.female':'Female',
+  'age.u25':'22-25','age.26':'26-30','age.31':'31-35','age.36':'36-40','age.41':'41+',
+  'ten.u1':'<1yr','ten.12':'1-2yr','ten.23':'2-3yr','ten.35':'3-5yr','ten.5':'5yr+',
+  'edu.a':'Associate','edu.b':'Bachelor','edu.m':'Master','edu.d':'PhD',
+  'plv.a':'Grade A','plv.b':'Grade B','plv.c':'Grade C','plv.d':'Grade D',
+  'cost.base':'Base Salary','cost.bonus':'Perf. Bonus','cost.soc':'Social Ins.','cost.fund':'Housing Fund','cost.other':'Other Benefits',
+  'status.ok':'Normal','status.warn':'Low','status.bad':'Alert','thresh.label':'Threshold',
+  'col.dept':'Dept.','col.name':'Name','col.pos':'Position','col.score':'Score','col.grade':'Grade',
+  'col.apps':'Applications','col.hired':'Hired','col.arate':'Onboarding Rate','col.rrate':'Retention Rate',
+  'col.active':'Active','col.female':'Female %','col.avgage':'Avg Age','col.turnover':'Turnover',
+  'col.avgbase':'Avg Base Salary','col.totalcost':'Monthly Cost','col.ratio':'Cost Ratio',
+  'col.headcount':'Headcount','col.count':'Count',
+  'alert.ok':'All recruitment metrics are within normal range','alert.ok.msg':'Keep up the current recruitment strategy.',
+  'alert.arrival.t':'Low Onboarding Rate','alert.arrival.m':'Review offer process, onboarding experience, and competitive salary levels. Reduce time from offer acceptance to start date.',
+  'alert.retain.t':'Retention Rate Alert','alert.retain.m':'Strengthen probation management and mentoring programs. Focus on departments with high attrition.',
+  'alert.interview.t':'Low Interview Pass Rate','alert.interview.m':'Resume screening may be too broad. Optimize job descriptions to improve initial screening accuracy.',
+  'alert.turnover.t':'High Turnover Rate','alert.turnover.m':'Focus on high-turnover departments. Conduct exit interviews and improve management practices.',
+  'alert.salary.t':'Large Salary Gap','alert.salary.m':'The highest/lowest dept salary ratio exceeds the threshold. Review compensation equity across departments.',
+  'insight.title':'🔍 Diagnostic Summary',
+  'missing.title':'Missing Field','missing.msg':'Required column not found in data. Please check Excel column names.',
+  'na':'N/A',
+  'settings.title':'Threshold Settings','settings.sub':'Customize alert thresholds. The system uses these for automatic diagnostics.',
+  'settings.r':'Recruitment Thresholds','settings.e':'Employee Thresholds',
+  'th.arrival':'Onboarding Rate Alert','th.arrival.d':'Show red alert when below this value',
+  'th.retain':'Retention Rate Alert','th.retain.d':'Show orange alert when below this value',
+  'th.interview':'Interview Rate Alert','th.interview.d':'Alert when pass rate is low',
+  'th.hire':'Hire Rate Alert','th.hire.d':'Alert when selection is too strict',
+  'th.turnover':'Turnover Rate Alert','th.turnover.d':'Show red alert when above this value',
+  'th.perf':'Performance Alert Score','th.perf.d':'Employees below this score appear in alert list',
+  'th.deptperf':'Dept. Performance Baseline','th.deptperf.d':'Departments below this are highlighted red',
+  'th.salary':'Salary Gap Alert Ratio','th.salary.d':'Alert when highest/lowest dept salary exceeds this multiplier',
+  'unit.score':'pts','unit.times':'x',
+  'perf.warn.of':' employees below ','perf.warn.pts':' pts'
+}};
+
+// ═══ State ═══
+const state = { recruit:null, emp:null, charts:{}, lang:'zh',
+  thresholds:{ arrival:80, retain:85, interview:50, hire:60, turnover:15, perf:60, deptPerf:70, salaryRatio:2.5 }
+};
+
+// ═══ I18N functions ═══
+function t(k){ return (I18N[state.lang]||I18N.zh)[k] || k; }
+
+function applyLang(){
+  document.getElementById('html-root').lang = state.lang==='zh'?'zh-CN':'en';
+  document.getElementById('lang-btn').textContent = t('lang.btn');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    const v = t(k);
+    if(el.tagName==='INPUT'||el.tagName==='BUTTON') el.textContent=v;
+    else el.innerHTML = v;
+  });
+  if(state.recruit) renderRecruitDashboard();
+  if(state.emp) renderEmpDashboard();
+}
+
+function toggleLang(){
+  state.lang = state.lang==='zh'?'en':'zh';
+  applyLang();
+}
+
+// ═══ Navigation ═══
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const nav=document.getElementById('nav-'+id);
+  if(nav) nav.classList.add('active');
+}
+
+function switchEmpTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('pane-'+tab).classList.add('active');
+}
+
+// ═══ File Handling ═══
+function handleDrop(ev,module){
+  ev.preventDefault();
+  const file=ev.dataTransfer.files[0];
+  if(file) parseExcel(file,module);
+}
+function handleFile(ev,module){
+  const file=ev.target.files[0];
+  if(file) parseExcel(file,module,file.name);
+}
+function parseExcel(file,module,name){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(module==='recruit'){
+      state.recruit=data;
+      document.getElementById('r-file-label').textContent = name ? '📄 '+name : '';
+      renderRecruitDashboard();
+    } else {
+      state.emp=data;
+      document.getElementById('e-file-label').textContent = name ? '📄 '+name : '';
+      renderEmpDashboard();
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ═══ Chart helpers ═══
+const COLORS=['#2563EB','#7C3AED','#DB2777','#DC2626','#D97706','#059669','#0891B2','#4F46E5'];
+const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'PingFang SC,Microsoft YaHei,sans-serif',size:12}}}}};
+
+function mkChart(id,config){
+  if(state.charts[id]){state.charts[id].destroy();delete state.charts[id];}
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  state.charts[id]=new Chart(ctx,config);
+}
+function barCfg(labels,datasets,opts={}){
+  return{type:'bar',data:{labels,datasets},options:{...baseOpts,...opts,scales:{x:{grid:{display:false},...((opts.scales||{}).x||{})},y:{grid:{color:'#F1F5F9'},beginAtZero:true,...((opts.scales||{}).y||{})}}}};
+}
+function pieCfg(labels,data,colors){
+  return{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors||COLORS,borderWidth:2,borderColor:'#fff'}]},options:{...baseOpts,cutout:'60%'}};
+}
+
+// Missing column handling
+function hasCol(data,col){
+  if(!data||!data.length)return false;
+  return data.some(r=>r[col]!==undefined&&r[col]!=='');
+}
+function noData(missing){
+  return`<div class="no-data-notice"><div class="ndi">📭</div><div class="ndt">${t('missing.title')}: ${missing}</div><div class="ndm">${t('missing.msg')}</div></div>`;
+}
+function restoreCanvas(cbId,chartId,h=''){
+  const cb=document.getElementById(cbId);
+  if(!cb)return false;
+  if(!document.getElementById(chartId)){
+    cb.innerHTML=`<div class="chart-wrap${h?' '+h:''}" ><canvas id="${chartId}"></canvas></div>`;
+  }
+  return true;
+}
+function renderChart(cbId,chartId,requiredCols,data,renderFn,h=''){
+  const missing=requiredCols.filter(c=>!hasCol(data,c));
+  if(missing.length){
+    const cb=document.getElementById(cbId);
+    if(cb){cb.innerHTML=noData(missing.join('、'));if(state.charts[chartId]){state.charts[chartId].destroy();delete state.charts[chartId];}}
+    return;
+  }
+  restoreCanvas(cbId,chartId,h);
+  renderFn();
+}
+
+// ═══ Utils ═══
+function pct(a,b){if(!b)return 0;return Math.round(a/b*100);}
+function avg(arr){if(!arr.length)return 0;return arr.reduce((s,v)=>s+v,0)/arr.length;}
+function sum(arr){return arr.reduce((s,v)=>s+v,0);}
+function groupCount(data,key){const m={};data.forEach(r=>{const v=r[key];if(v)m[v]=(m[v]||0)+1;});return m;}
+function fmtDate(d){if(!d)return'';if(!(d instanceof Date))return d;return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function rndCh(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function getThresh(){return state.thresholds;}
+function sCls(val,thresh,dir='above'){
+  if(dir==='above'){if(val>=thresh)return'ok';if(val>=thresh*.9)return'warn';return'bad';}
+  else{if(val<=thresh)return'ok';if(val<=thresh*1.1)return'warn';return'bad';}
+}
+function sLabel(cls){return{ok:t('status.ok'),warn:t('status.warn'),bad:t('status.bad')}[cls]||'';}
+function kpiCard(label,value,unit,cls,hint,threshold){
+  const isNA=value===null||value===undefined;
+  const valStr=isNA?t('na'):(value+''+(unit?'':''));
+  const tag=`<span class="kpi-tag ${isNA?'blue':cls}">${isNA?t('na'):sLabel(cls)}</span>`;
+  // fix: threshold already includes unit, do NOT append unit again
+  const thHint=(!isNA&&threshold)?`<div class="kpi-hint">${t('thresh.label')}: ${threshold}</div>`:'';
+  return`<div class="kpi ${isNA?'blue':cls}"><div class="kpi-lbl">${label}</div><div class="kpi-val">${isNA?'—':value}<span style="font-size:14px;font-weight:400">${isNA?'':unit}</span></div>${tag}${thHint}${hint?`<div class="kpi-hint">${hint}</div>`:''}</div>`;
+}
+
+// ═══ Demo data ═══
+function loadRecruitDemo(){
+  state.recruit=generateRecruitDemo();
+  document.getElementById('r-file-label').textContent=state.lang==='zh'?'🎭 演示数据':'🎭 Demo Data';
+  renderRecruitDashboard();
+}
+function loadEmpDemo(){
+  state.emp=generateEmpDemo();
+  document.getElementById('e-file-label').textContent=state.lang==='zh'?'🎭 演示数据':'🎭 Demo Data';
+  renderEmpDashboard();
+}
+
+function generateRecruitDemo(){
+  const depts=['技术部','市场部','销售部','运营部','人力资源部','财务部','产品部'];
+  const pos={'技术部':['前端工程师','后端工程师','算法工程师','测试工程师'],'市场部':['市场专员','品牌经理','活动策划'],'销售部':['销售代表','销售经理','客户经理'],'运营部':['运营专员','内容运营','数据分析师'],'人力资源部':['HR专员','招聘专员','HRBP'],'财务部':['财务专员','会计','财务分析师'],'产品部':['产品经理','UI设计师','产品专员']};
+  const edus=['大专','本科','本科','本科','本科','硕士','硕士','博士'];
+  const chs=['招聘网站','内部推荐','猎头','校园招聘','社交媒体'];
+  const sn=['李','王','张','刘','陈','杨','黄','吴','赵','周'];
+  const fnm=['明','强','伟','杰','磊','浩','涛','辉'];
+  const fnf=['芳','丽','敏','洁','红','梅','艳','婷'];
+  const now=new Date();const data=[];
+  for(let i=0;i<130;i++){
+    const dept=rndCh(depts);const g=Math.random()<0.55?'男':'女';
+    const name=rndCh(sn)+(g==='男'?rndCh(fnm):rndCh(fnf));
+    const applyDate=new Date(now-rnd(0,365)*86400000);
+    const iv=Math.random()<0.72;const ivok=iv&&Math.random()<0.58;
+    const hired=ivok&&Math.random()<0.82;const arr=hired&&Math.random()<0.76;const onj=arr&&Math.random()<0.88;
+    data.push({'姓名':name,'性别':g,'年龄':rnd(22,42),'学历':rndCh(edus),'应聘部门':dept,'应聘岗位':rndCh(pos[dept]),'招聘渠道':rndCh(chs),'投递日期':fmtDate(applyDate),'是否面试':iv?'是':'否','面试结果':iv?(ivok?'通过':'未通过'):'','是否录用':hired?'是':'否','实际到岗日期':arr?fmtDate(new Date(applyDate.getTime()+rnd(14,45)*86400000)):'','是否在职':arr?(onj?'是':'否'):''});
+  }
+  return data;
+}
+
+function generateEmpDemo(){
+  // Dept weights: tech 35%, others distributed
+  const deptWeights=[
+    {d:'技术部',w:0.35},{d:'市场部',w:0.12},{d:'销售部',w:0.13},{d:'运营部',w:0.12},
+    {d:'人力资源部',w:0.09},{d:'财务部',w:0.09},{d:'产品部',w:0.10}
+  ];
+  function rndDept(){const r=Math.random();let s=0;for(const dw of deptWeights){s+=dw.w;if(r<s)return dw.d;}return deptWeights[0].d;}
+  const pos={'技术部':['高级工程师','中级工程师','初级工程师','架构师'],'市场部':['市场总监','市场经理','市场专员'],'销售部':['销售总监','区域经理','销售代表'],'运营部':['运营总监','运营专员','数据分析师'],'人力资源部':['HR总监','HRBP','招聘经理'],'财务部':['财务经理','财务分析师','会计'],'产品部':['产品总监','产品经理','UI设计师']};
+  const salBase={'技术部':18000,'市场部':13000,'销售部':12000,'运营部':11000,'人力资源部':10000,'财务部':11000,'产品部':15000};
+  const sn=['李','王','张','刘','陈','杨','黄','吴','赵','周','孙','胡','徐','朱'];
+  const fnm=['明','强','伟','杰','磊','浩'];const fnf=['芳','丽','敏','洁','红','梅'];
+  const leaveR=['个人发展','薪酬原因','家庭原因','工作压力','公司发展'];
+  const now=new Date();const data=[];
+  // Nullify-field candidates (8% of rows, up to 3 fields each)
+  const nullifyIdx=new Set();while(nullifyIdx.size<16){nullifyIdx.add(Math.floor(Math.random()*200));}
+  const nullFields=['年龄','学历','岗位'];
+
+  for(let i=0;i<200;i++){
+    const dept=rndDept();const g=Math.random()<0.52?'男':'女';
+    const name=rndCh(sn)+(g==='男'?rndCh(fnm):rndCh(fnf));
+    // Bimodal tenure: 45% ≤12 months, 35% ≥36 months, 20% in between
+    let tenMon;
+    const tr=Math.random();
+    if(tr<0.45) tenMon=rnd(1,12);
+    else if(tr<0.80) tenMon=rnd(36,96);
+    else tenMon=rnd(13,35);
+    const joinDate=new Date(now.getTime()-tenMon*30*86400000);
+    const isLeft=Math.random()<0.13;
+    // Performance stratification: 15%≥85, 65% in 65-84, 20%<65
+    let perf;
+    if(isLeft){perf=rnd(30,74);}else{
+      const pr=Math.random();
+      if(pr<0.15) perf=rnd(85,100);
+      else if(pr<0.80) perf=rnd(65,84);
+      else perf=rnd(40,64);
+    }
+    const grade=perf>=90?'A':perf>=75?'B':perf>=60?'C':'D';
+    const base=salBase[dept]+rnd(-3000,5000);
+    const bonus=Math.round(base*(perf/100)*0.3);
+    const soc=Math.round(base*0.2);const fund=Math.round(base*0.12);
+    const empId='EMP'+String(i+1).padStart(4,'0');
+    const row={
+      '员工编号':empId,'姓名':name,'性别':g,'年龄':rnd(22,50),'学历':rndCh(['大专','本科','本科','本科','硕士','硕士','博士']),
+      '部门':dept,'岗位':rndCh(pos[dept]),'职级':rndCh(['P1','P2','P3','P4','P5','P6']),
+      '入职日期':fmtDate(joinDate),'在职状态':isLeft?'离职':'在职',
+      '离职日期':isLeft?fmtDate(new Date(joinDate.getTime()+rnd(3,tenMon>3?tenMon-1:1)*30*86400000)):'',
+      '离职原因':isLeft?rndCh(leaveR):'',
+      '绩效评分':perf,'绩效等级':grade,'基本工资':base,'绩效奖金':bonus,
+      '公司社保':soc,'公司公积金':fund,'其他福利':rnd(500,2000)
+    };
+    // Nullify some fields for 8% of rows
+    if(nullifyIdx.has(i)){nullFields.forEach(f=>{row[f]='';});}
+    data.push(row);
+  }
+  // Inject anomalies for data quality diagnostics
+  // 2 abnormal ages
+  data[5]['年龄']=15;
+  data[12]['年龄']=72;
+  // 2 duplicate employee IDs (copy EMP0001 ID to row index 20)
+  data[20]['员工编号']='EMP0001';
+  data[45]['员工编号']='EMP0002';
+  data[0]['员工编号']='EMP0001';// ensure EMP0001 exists at index 0
+  data[1]['员工编号']='EMP0002';// ensure EMP0002 exists at index 1
+  // 1 negative salary
+  data[30]['基本工资']=-500;
+  return data;
+}
+
+// ═══ Recruitment Render ═══
+function renderRecruitDashboard(){
+  const data=state.recruit;if(!data||!data.length)return;
+  const th=getThresh();
+  document.getElementById('recruit-upload-card').style.display='none';
+  document.getElementById('recruit-dashboard').style.display='block';
+  document.getElementById('r-action').style.display='flex';
+
+  const total=data.length;
+  const interviewed=data.filter(r=>r['是否面试']==='是').length;
+  const ivok=data.filter(r=>r['面试结果']==='通过').length;
+  const hired=data.filter(r=>r['是否录用']==='是').length;
+  const hasArr=hasCol(data,'实际到岗日期');
+  const hasOnj=hasCol(data,'是否在职');
+  const arrived=hasArr?data.filter(r=>r['实际到岗日期']&&r['实际到岗日期']!=='').length:null;
+  const onJob=hasOnj?data.filter(r=>r['是否在职']==='是').length:null;
+  const iRate=pct(ivok,interviewed);const hRate=pct(hired,ivok);
+  const aRate=hasArr&&hired>0?pct(arrived,hired):null;
+  const rRate=hasOnj&&arrived>0?pct(onJob,arrived):null;
+  const aCls=aRate!==null?sCls(aRate,th.arrival):'blue';
+  const rCls=rRate!==null?sCls(rRate,th.retain):'blue';
+
+  // KPIs
+  document.getElementById('recruit-kpis').innerHTML=
+    kpiCard(t('kpi.apps'),total,'人','blue','')+
+    kpiCard(t('kpi.irate'),iRate,'%',sCls(iRate,th.interview),'',th.interview+'%')+
+    kpiCard(t('kpi.hrate'),hRate,'%',sCls(hRate,th.hire),'',th.hire+'%')+
+    kpiCard(t('kpi.arate'),aRate,'%',aCls,'',aRate!==null?th.arrival+'%':'')+
+    kpiCard(t('kpi.rrate'),rRate,'%',rCls,'',rRate!==null?th.retain+'%':'');
+
+  // Alerts
+  const alerts=[];
+  if(aRate!==null&&aRate<th.arrival) alerts.push({cls:'a-bad',ic:'🚨',t:t('alert.arrival.t')+` (${aRate}% < ${th.arrival}%)`,m:t('alert.arrival.m')});
+  if(rRate!==null&&rRate<th.retain) alerts.push({cls:'a-warn',ic:'⚠️',t:t('alert.retain.t')+` (${rRate}% < ${th.retain}%)`,m:t('alert.retain.m')});
+  if(iRate<th.interview) alerts.push({cls:'a-info',ic:'💡',t:t('alert.interview.t')+` (${iRate}%)`,m:t('alert.interview.m')});
+  document.getElementById('recruit-alerts').innerHTML=alerts.length?alerts.map(a=>`<div class="alert ${a.cls}"><div class="alert-icon">${a.ic}</div><div class="alert-body"><div class="alert-title">${a.t}</div>${a.m}</div></div>`).join(''):`<div class="alert a-ok"><div class="alert-icon">✅</div><div class="alert-body"><div class="alert-title">${t('alert.ok')}</div>${t('alert.ok.msg')}</div></div>`;
+
+  // Funnel
+  const fItems=[
+    {k:'f.apps',n:total,c:'#2563EB'},{k:'f.interview',n:interviewed,c:'#7C3AED'},{k:'f.pass',n:ivok,c:'#DB2777'},
+    {k:'f.hired',n:hired,c:'#D97706'},{k:'f.arrived',n:arrived??'-',c:'#059669'},{k:'f.retained',n:onJob??'-',c:'#0891B2'}
+  ];
+  document.getElementById('cb-funnel').innerHTML='<div class="funnel">'+fItems.map(f=>`<div class="funnel-row"><div class="funnel-lbl">${t(f.k)}</div><div class="funnel-bar-w"><div class="funnel-bar" style="width:${typeof f.n==='number'?Math.round(f.n/total*100):0}%;background:${f.c}">${typeof f.n==='number'?Math.round(f.n/total*100)+'%':''}</div></div><div class="funnel-num">${f.n}</div></div>`).join('')+'</div>';
+
+  // Channel chart
+  renderChart('cb-channel-r','ch-channel',['招聘渠道'],data,()=>{
+    const m=groupCount(data,'招聘渠道');
+    mkChart('ch-channel',barCfg(Object.keys(m),[{label:t('col.count'),data:Object.values(m),backgroundColor:COLORS}],{indexAxis:'y',plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Dept chart
+  renderChart('cb-dept-r','ch-dept-r',['应聘部门'],data,()=>{
+    const m=groupCount(data,'应聘部门');
+    mkChart('ch-dept-r',barCfg(Object.keys(m),[{label:t('col.apps'),data:Object.values(m),backgroundColor:COLORS}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Gender chart
+  renderChart('cb-gender-r','ch-gender-r',['性别'],data,()=>{
+    const m=groupCount(data,'性别');
+    const labs=Object.keys(m).map(k=>k==='男'?t('g.male'):k==='女'?t('g.female'):k);
+    mkChart('ch-gender-r',pieCfg(labs,Object.values(m),['#3B82F6','#EC4899']));
+  });
+
+  // Age chart
+  renderChart('cb-age-r','ch-age-r',['年龄'],data,()=>{
+    const b={[t('age.u25')]:0,[t('age.26')]:0,[t('age.31')]:0,[t('age.36')]:0,[t('age.41')]:0};const keys=Object.keys(b);
+    data.forEach(r=>{const a=parseInt(r['年龄'])||0;if(a<=25)b[keys[0]]++;else if(a<=30)b[keys[1]]++;else if(a<=35)b[keys[2]]++;else if(a<=40)b[keys[3]]++;else b[keys[4]]++;});
+    mkChart('ch-age-r',barCfg(keys,[{label:t('col.headcount'),data:Object.values(b),backgroundColor:'#6366F1'}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Education chart
+  renderChart('cb-edu-r','ch-edu-r',['学历'],data,()=>{
+    const eduKeys=['大专','本科','硕士','博士'];
+    const eduLabs=[t('edu.a'),t('edu.b'),t('edu.m'),t('edu.d')];
+    const m=groupCount(data,'学历');
+    mkChart('ch-edu-r',barCfg(eduLabs,[{label:t('col.headcount'),data:eduKeys.map(e=>m[e]||0),backgroundColor:['#A78BFA','#60A5FA','#34D399','#FBBF24']}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Dept table
+  if(hasCol(data,'应聘部门')){
+    const depts=[...new Set(data.map(r=>r['应聘部门']))].filter(Boolean);
+    const rows=depts.map(d=>{
+      const sub=data.filter(r=>r['应聘部门']===d);
+      const h=sub.filter(r=>r['是否录用']==='是').length;
+      const a=hasArr?sub.filter(r=>r['实际到岗日期']&&r['实际到岗日期']!=='').length:null;
+      const o=hasOnj?sub.filter(r=>r['是否在职']==='是').length:null;
+      const ar=a!==null&&h>0?pct(a,h):null;const rr=o!==null&&a>0?pct(o,a):null;
+      const arb=ar!==null?`<span class="badge ${sCls(ar,th.arrival)==='ok'?'b-ok':sCls(ar,th.arrival)==='warn'?'b-warn':'b-bad'}">${ar}%</span>`:'—';
+      const rrb=rr!==null?`<span class="badge ${sCls(rr,th.retain)==='ok'?'b-ok':sCls(rr,th.retain)==='warn'?'b-warn':'b-bad'}">${rr}%</span>`:'—';
+      return`<tr><td>${d}</td><td>${sub.length}</td><td>${h}</td><td>${arb}</td><td>${rrb}</td></tr>`;
+    });
+    document.getElementById('tbl-dept-r').innerHTML=`<thead><tr><th>${t('col.dept')}</th><th>${t('col.apps')}</th><th>${t('col.hired')}</th><th>${t('col.arate')}</th><th>${t('col.rrate')}</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  }
+
+  // Insight
+  const topDept=hasCol(data,'应聘部门')?Object.entries(groupCount(data,'应聘部门')).sort((a,b)=>b[1]-a[1])[0]:null;
+  const topEdu=hasCol(data,'学历')?Object.entries(groupCount(data,'学历')).sort((a,b)=>b[1]-a[1])[0]:null;
+  const topCh=hasCol(data,'招聘渠道')?Object.entries(groupCount(data,'招聘渠道')).sort((a,b)=>b[1]-a[1])[0]:null;
+  let insightItems=[];
+  if(topDept) insightItems.push(`${state.lang==='zh'?'投递量最高的部门是':'Top application dept:'} <b>${topDept[0]}</b>（${topDept[1]}${state.lang==='zh'?'人':'ppl'}）`);
+  if(topEdu) insightItems.push(`${state.lang==='zh'?'主要候选人学历为':'Top education level:'} <b>${topEdu[0]}</b>，${pct(topEdu[1],total)}%`);
+  if(topCh) insightItems.push(`${state.lang==='zh'?'效果最好的渠道':'Top channel:'} <b>${topCh[0]}</b>（${topCh[1]}${state.lang==='zh'?'人':'ppl'}）${state.lang==='zh'?'，建议优先投入预算':' — consider prioritizing budget here'}`);
+  if(aRate!==null) insightItems.push(`${state.lang==='zh'?'整体到岗率':'Overall onboarding rate'} <b>${aRate}%</b>，${state.lang==='zh'?'留任率':'retention'} <b>${rRate??'N/A'}%</b>`);
+  document.getElementById('recruit-insight').innerHTML=`<h4>${t('insight.title')}</h4><ul>${insightItems.map(s=>`<li>${s}</li>`).join('')}</ul>`;
+  renderRecruitDiagnostics(data);
+}
+
+// ═══ Employee Render ═══
+function renderEmpDashboard(){
+  const data=state.emp;if(!data||!data.length)return;
+  const th=getThresh();
+  document.getElementById('emp-upload-card').style.display='none';
+  document.getElementById('emp-dashboard').style.display='block';
+  document.getElementById('e-action').style.display='flex';
+
+  const statusKey=hasCol(data,'在职状态')?'在职状态':null;
+  const active=statusKey?data.filter(r=>r[statusKey]!=='离职'):data;
+  const left=statusKey?data.filter(r=>r[statusKey]==='离职'):[];
+  const trRate=pct(left.length,data.length);
+  const trCls=sCls(trRate,th.turnover,'below');
+
+  // Planning KPIs
+  const depts=[...new Set(data.map(r=>r['部门']))].filter(Boolean);
+  document.getElementById('emp-kpis').innerHTML=
+    kpiCard(t('kpi.active'),active.length,'人','blue','')+
+    kpiCard(t('kpi.left'),left.length,'人',left.length>0?'warn':'ok','')+
+    kpiCard(t('kpi.turnover'),trRate,'%',trCls,'',th.turnover+'%')+
+    kpiCard(t('kpi.depts'),depts.length,'个','blue','');
+
+  // Alerts
+  const eAlerts=[];
+  if(trRate>th.turnover) eAlerts.push({cls:'a-bad',ic:'🚨',t:t('alert.turnover.t')+` (${trRate}% > ${th.turnover}%)`,m:t('alert.turnover.m')});
+  document.getElementById('emp-alerts').innerHTML=eAlerts.map(a=>`<div class="alert ${a.cls}"><div class="alert-icon">${a.ic}</div><div class="alert-body"><div class="alert-title">${a.t}</div>${a.m}</div></div>`).join('');
+
+  // Dept distribution
+  renderChart('cb-dept-e','ch-dept-e',['部门'],active,()=>{
+    const m=groupCount(active,'部门');
+    mkChart('ch-dept-e',barCfg(Object.keys(m),[{label:t('col.active'),data:Object.values(m),backgroundColor:COLORS}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Gender by dept (stacked)
+  renderChart('cb-struct-e','ch-struct-e',['部门','性别'],active,()=>{
+    const gm={'男':{},'女':{}};depts.forEach(d=>{gm['男'][d]=0;gm['女'][d]=0;});
+    active.forEach(r=>{if(gm[r['性别']]&&depts.includes(r['部门']))gm[r['性别']][r['部门']]++;});
+    mkChart('ch-struct-e',barCfg(depts,[
+      {label:t('g.male'),data:depts.map(d=>gm['男'][d]||0),backgroundColor:'#3B82F6'},
+      {label:t('g.female'),data:depts.map(d=>gm['女'][d]||0),backgroundColor:'#EC4899'}
+    ],{scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}));
+  });
+
+  // Age
+  renderChart('cb-age-e','ch-age-e',['年龄'],active,()=>{
+    const b={[t('age.u25')]:0,[t('age.26')]:0,[t('age.31')]:0,[t('age.36')]:0,[t('age.41')]:0};const keys=Object.keys(b);
+    active.forEach(r=>{const a=parseInt(r['年龄'])||0;if(a<=25)b[keys[0]]++;else if(a<=30)b[keys[1]]++;else if(a<=35)b[keys[2]]++;else if(a<=40)b[keys[3]]++;else b[keys[4]]++;});
+    mkChart('ch-age-e',barCfg(keys,[{label:t('col.headcount'),data:Object.values(b),backgroundColor:'#818CF8'}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Tenure
+  renderChart('cb-tenure-e','ch-tenure-e',['入职日期'],active,()=>{
+    const now=new Date();
+    const b={[t('ten.u1')]:0,[t('ten.12')]:0,[t('ten.23')]:0,[t('ten.35')]:0,[t('ten.5')]:0};const keys=Object.keys(b);
+    active.forEach(r=>{const d=r['入职日期'];if(!d)return;const j=d instanceof Date?d:new Date(d);const m=(now-j)/(86400000*30);if(m<12)b[keys[0]]++;else if(m<24)b[keys[1]]++;else if(m<36)b[keys[2]]++;else if(m<60)b[keys[3]]++;else b[keys[4]]++;});
+    mkChart('ch-tenure-e',barCfg(keys,[{label:t('col.headcount'),data:Object.values(b),backgroundColor:'#34D399'}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+  });
+
+  // Dept table
+  if(depts.length){
+    const rows=depts.map(d=>{
+      const sub=data.filter(r=>r['部门']===d);
+      const act=sub.filter(r=>r[statusKey]!=='离职');
+      const lft=sub.filter(r=>r[statusKey]==='离职');
+      const tr=pct(lft.length,sub.length);const trC=sCls(tr,th.turnover,'below');
+      const females=act.filter(r=>r['性别']==='女').length;
+      const avgAge=avg(act.map(r=>parseInt(r['年龄'])||0));
+      return`<tr><td>${d}</td><td>${act.length}</td><td>${females}(${pct(females,act.length)}%)</td><td>${avgAge.toFixed(0)}${state.lang==='zh'?'岁':''}</td><td><span class="badge ${trC==='ok'?'b-ok':trC==='warn'?'b-warn':'b-bad'}">${tr}%</span></td></tr>`;
+    });
+    document.getElementById('tbl-dept-e').innerHTML=`<thead><tr><th>${t('col.dept')}</th><th>${t('col.active')}</th><th>${t('col.female')}</th><th>${t('col.avgage')}</th><th>${t('col.turnover')}</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  }
+
+  // Performance
+  const perfData=active.filter(r=>r['绩效评分']!==''&&r['绩效评分']!==undefined);
+  if(hasCol(active,'绩效评分')){
+    const scores=perfData.map(r=>parseFloat(r['绩效评分'])||0);
+    const avgP=avg(scores);
+    const lv={A:0,B:0,C:0,D:0};perfData.forEach(r=>{if(lv[r['绩效等级']]!==undefined)lv[r['绩效等级']]++;});
+    const wc=perfData.filter(r=>(parseFloat(r['绩效评分'])||0)<th.perf).length;
+    document.getElementById('perf-kpis').innerHTML=
+      kpiCard(t('kpi.avgperf'),avgP.toFixed(1),t('unit.score'),sCls(avgP,th.deptPerf),'',th.deptPerf+t('unit.score'))+
+      kpiCard(t('kpi.agrade'),lv.A,'人','ok',`${pct(lv.A,perfData.length)}%`)+
+      kpiCard(t('kpi.cdgrade'),lv.C+lv.D,'人',(lv.C+lv.D)>perfData.length*0.2?'warn':'ok',`${pct(lv.C+lv.D,perfData.length)}%`)+
+      kpiCard(t('kpi.perfwarn'),wc,'人',wc>0?'bad':'ok',`< ${th.perf}${t('unit.score')}`);
+
+    renderChart('cb-perf-dist','ch-perf-dist',['绩效评分'],active,()=>{
+      const bins=['0-40','40-50','50-60','60-70','70-80','80-90','90-100'];
+      const vals=[0,0,0,0,0,0,0];
+      scores.forEach(s=>{if(s<40)vals[0]++;else if(s<50)vals[1]++;else if(s<60)vals[2]++;else if(s<70)vals[3]++;else if(s<80)vals[4]++;else if(s<90)vals[5]++;else vals[6]++;});
+      mkChart('ch-perf-dist',barCfg(bins,[{label:t('col.headcount'),data:vals,backgroundColor:vals.map((_,i)=>i<3?'#FCA5A5':i<5?'#FCD34D':'#6EE7B7')}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+    });
+
+    renderChart('cb-perf-level','ch-perf-level',['绩效等级'],active,()=>{
+      mkChart('ch-perf-level',pieCfg([t('plv.a'),t('plv.b'),t('plv.c'),t('plv.d')],[lv.A,lv.B,lv.C,lv.D],['#10B981','#3B82F6','#F59E0B','#EF4444']));
+    });
+
+    if(depts.length){
+      const deptPerfMap={};depts.forEach(d=>{const s=perfData.filter(r=>r['部门']===d);deptPerfMap[d]=s.length?avg(s.map(r=>parseFloat(r['绩效评分'])||0)):0;});
+      restoreCanvas('cb-dept-perf','ch-dept-perf','h320');
+      mkChart('ch-dept-perf',{type:'bar',data:{labels:depts,datasets:[{label:t('kpi.avgperf'),data:depts.map(d=>+deptPerfMap[d].toFixed(1)),backgroundColor:depts.map(d=>deptPerfMap[d]<th.deptPerf?'#FCA5A5':'#60A5FA')},{label:state.lang==='zh'?'企业平均':'Company Avg',data:depts.map(()=>+avgP.toFixed(1)),type:'line',borderColor:'#EF4444',borderWidth:2,borderDash:[5,5],pointRadius:0,fill:false}]},options:{...baseOpts,scales:{x:{grid:{display:false}},y:{min:0,max:100,grid:{color:'#F1F5F9'}}}}});
+    }
+
+    const warnList=perfData.filter(r=>(parseFloat(r['绩效评分'])||0)<th.perf).sort((a,b)=>(parseFloat(a['绩效评分'])||0)-(parseFloat(b['绩效评分'])||0));
+    document.getElementById('perf-warn-sub').textContent=`${t('perf.warn.of')} ${warnList.length} ${t('perf.warn.of').includes('人')?'':' employees '}${t('thresh.label').includes('线')?'':''} < ${th.perf}${t('unit.score')}`;
+    document.getElementById('perf-warn-sub').textContent=state.lang==='zh'?`共${warnList.length}人低于${th.perf}分`:`${warnList.length} employees below ${th.perf} pts`;
+    document.getElementById('tbl-perf-warn').innerHTML=`<thead><tr><th>${t('col.name')}</th><th>${t('col.dept')}</th><th>${t('col.pos')}</th><th>${t('col.score')}</th><th>${t('col.grade')}</th></tr></thead><tbody>`+
+      warnList.map(r=>`<tr class="row-bad"><td>${r['姓名']}</td><td>${r['部门']}</td><td>${r['岗位']}</td><td><div class="score-bar"><div class="prog"><div class="prog-bar prog-bad" style="width:${r['绩效评分']}%"></div></div><span class="score-num">${r['绩效评分']}</span></div></td><td><span class="badge b-bad">${r['绩效等级']}</span></td></tr>`).join('')+
+      (warnList.length===0?`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">🎉 ${state.lang==='zh'?'暂无预警员工':'No performance alerts'}</td></tr>`:'')+
+      '</tbody>';
+  } else {
+    ['perf-kpis','cb-perf-dist','cb-perf-level','cb-dept-perf'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=noData('绩效评分');});
+  }
+
+  // Compensation
+  const compData=active.filter(r=>r['基本工资']!==''&&r['基本工资']!==undefined);
+  if(hasCol(active,'基本工资')){
+    const totB=sum(compData.map(r=>parseFloat(r['基本工资'])||0));
+    const totBo=sum(compData.map(r=>parseFloat(r['绩效奖金'])||0));
+    const totS=sum(compData.map(r=>parseFloat(r['公司社保'])||0));
+    const totF=sum(compData.map(r=>parseFloat(r['公司公积金'])||0));
+    const totO=sum(compData.map(r=>parseFloat(r['其他福利'])||0));
+    const totC=totB+totBo+totS+totF+totO;
+    const avgBase=compData.length?totB/compData.length:0;
+    document.getElementById('comp-kpis').innerHTML=
+      kpiCard(t('kpi.cost'),(totC/10000).toFixed(1),'万','blue',`${compData.length}${state.lang==='zh'?'人合计':' people'}`)+
+      kpiCard(t('kpi.avgbase'),(avgBase/1000).toFixed(1),'K','blue','')+
+      kpiCard(t('kpi.avgtotal'),(totC/compData.length/1000).toFixed(1),'K','blue',state.lang==='zh'?'含社保公积金':'incl. insurance')+
+      kpiCard(t('kpi.baseratio'),pct(totB,totC),'%','blue','');
+
+    renderChart('cb-cost-pie','ch-cost-pie',['基本工资'],compData,()=>{
+      mkChart('ch-cost-pie',pieCfg([t('cost.base'),t('cost.bonus'),t('cost.soc'),t('cost.fund'),t('cost.other')],[Math.round(totB),Math.round(totBo),Math.round(totS),Math.round(totF),Math.round(totO)],['#2563EB','#7C3AED','#DB2777','#D97706','#059669']));
+    });
+
+    if(depts.length){
+      const deptSal={};depts.forEach(d=>{const s=compData.filter(r=>r['部门']===d);deptSal[d]=s.length?avg(s.map(r=>parseFloat(r['基本工资'])||0)):0;});
+      const maxS=Math.max(...Object.values(deptSal));const minS=Math.min(...Object.values(deptSal).filter(v=>v>0));
+      const salRatio=minS>0?(maxS/minS).toFixed(2):0;
+
+      restoreCanvas('cb-salary-dept','ch-salary-dept');
+      mkChart('ch-salary-dept',barCfg(depts,[{label:state.lang==='zh'?'平均基本工资(元)':'Avg Base Salary',data:depts.map(d=>Math.round(deptSal[d])),backgroundColor:COLORS}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+
+      renderChart('cb-salary-dist','ch-salary-dist',['基本工资'],compData,()=>{
+        const bins=[state.lang==='zh'?'<8K':'<8K','8-12K','12-16K','16-20K','20-25K','25K+'];
+        const vals=[0,0,0,0,0,0];
+        compData.forEach(r=>{const s=(parseFloat(r['基本工资'])||0)/1000;if(s<8)vals[0]++;else if(s<12)vals[1]++;else if(s<16)vals[2]++;else if(s<20)vals[3]++;else if(s<25)vals[4]++;else vals[5]++;});
+        mkChart('ch-salary-dist',barCfg(bins,[{label:t('col.headcount'),data:vals,backgroundColor:'#34D399'}],{plugins:{...baseOpts.plugins,legend:{display:false}}}));
+      });
+
+      const compRows=depts.map(d=>{
+        const s=compData.filter(r=>r['部门']===d);if(!s.length)return'';
+        const avgB=avg(s.map(r=>parseFloat(r['基本工资'])||0));
+        const tc=sum(s.map(r=>(parseFloat(r['基本工资'])||0)+(parseFloat(r['绩效奖金'])||0)+(parseFloat(r['公司社保'])||0)+(parseFloat(r['公司公积金'])||0)+(parseFloat(r['其他福利'])||0)));
+        return`<tr><td>${d}</td><td>${s.length}</td><td>${Math.round(avgB).toLocaleString()}</td><td>${(tc/10000).toFixed(2)}万</td><td>${pct(tc,totC)}%</td></tr>`;
+      }).filter(Boolean);
+      document.getElementById('tbl-comp').innerHTML=`<thead><tr><th>${t('col.dept')}</th><th>${t('col.active')}</th><th>${t('col.avgbase')}</th><th>${t('col.totalcost')}</th><th>${t('col.ratio')}</th></tr></thead><tbody>${compRows.join('')}</tbody>`;
+
+      if(parseFloat(salRatio)>th.salaryRatio){
+        document.getElementById('comp-kpis').insertAdjacentHTML('afterend',`<div class="alert a-warn"><div class="alert-icon">⚠️</div><div class="alert-body"><div class="alert-title">${t('alert.salary.t')} (${salRatio}x)</div>${t('alert.salary.m')}</div></div>`);
+      }
+    }
+  } else {
+    document.getElementById('comp-kpis').innerHTML=noData('基本工资');
+  }
+  renderDiagnostics(data, active, left);
+}
+
+// ═══ Diagnostics ═══
+
+function calcRiskScores(turnRate, avgPerf, active, left, dqScore){
+  // dim1 留任健康
+  const d1 = Math.max(0, 100 - Math.min(turnRate*4, 100));
+  // dim2 绩效水平
+  const d2 = Math.min(avgPerf*1.1, 100);
+  // dim3 梯队活力 — fresh blood (tenure < 12mo) pct × 2.5, cap 100
+  const newbies = active.filter(r=>{
+    const jd = r['入职日期'];if(!jd)return false;
+    const j = jd instanceof Date ? jd : new Date(jd);
+    return (Date.now()-j.getTime())/(86400000*30) < 12;
+  }).length;
+  const d3 = Math.min(pct(newbies, active.length||1)*2.5, 100);
+  // dim4 人才保留 — % of leavers who were high performers, penalised
+  const highPerfActive = active.filter(r=>(parseFloat(r['绩效评分'])||0)>=75).length;
+  const highPerfLeft = left.filter(r=>(parseFloat(r['绩效评分'])||0)>=75).length;
+  const totalHighPerf = highPerfActive + highPerfLeft;
+  const d4 = totalHighPerf > 0 ? Math.max(0, 100 - pct(highPerfLeft, totalHighPerf)*1.5) : 100;
+  // dim5 数据质量
+  const d5 = dqScore;
+  return [d1,d2,d3,d4,d5].map(v=>Math.round(v));
+}
+
+function calcPersonaMatrix(active){
+  const now = Date.now();
+  const HH=[],HL=[],LH=[],LL=[];
+  active.forEach(r=>{
+    const perf = parseFloat(r['绩效评分']);
+    if(isNaN(perf)||perf==='')return;
+    const jd = r['入职日期'];if(!jd)return;
+    const j = jd instanceof Date ? jd : new Date(jd);
+    const tenMon = (now - j.getTime())/(86400000*30);
+    const hiPerf = perf >= 75;
+    const longTen = tenMon >= 24;
+    if(hiPerf && longTen) HH.push(r);
+    else if(hiPerf && !longTen) HL.push(r);
+    else if(!hiPerf && longTen) LH.push(r);
+    else LL.push(r);
+  });
+  return {HH,HL,LH,LL,counts:{HH:HH.length,HL:HL.length,LH:LH.length,LL:LL.length}};
+}
+
+function calcDataQuality(data, expectedFields){
+  if(!data||!data.length) return {byField:{},overallScore:0,issues:{abnormalAge:[],duplicates:[],badSalary:[]}};
+  const total = data.length;
+  const byField={};
+  expectedFields.forEach(f=>{
+    const filled = data.filter(r=>r[f]!==undefined&&r[f]!==''&&r[f]!==null).length;
+    byField[f] = Math.round(filled/total*100);
+  });
+  const rates = Object.values(byField);
+  const overallScore = rates.length ? Math.round(rates.reduce((s,v)=>s+v,0)/rates.length) : 100;
+
+  // Abnormal age
+  const abnormalAge = data.filter(r=>{
+    const a=parseInt(r['年龄']);
+    return !isNaN(a)&&(a<16||a>70);
+  }).map(r=>({name:r['姓名']||'?',age:r['年龄']}));
+
+  // Duplicate employees
+  const idMap={};
+  data.forEach((r,i)=>{
+    const id = r['员工编号']||(r['姓名']+'|'+(r['部门']||''));
+    if(!id)return;
+    if(!idMap[id]) idMap[id]=[];
+    idMap[id].push(i);
+  });
+  const duplicates = Object.entries(idMap).filter(([,idxs])=>idxs.length>1).map(([id,idxs])=>({id, count:idxs.length}));
+
+  // Bad salary
+  const badSalary = data.filter(r=>{
+    const b=parseFloat(r['基本工资']);const bn=parseFloat(r['绩效奖金']);
+    return (!isNaN(b)&&(b<=0||b>500000))||(!isNaN(bn)&&bn<0);
+  }).map(r=>({name:r['姓名']||'?',base:r['基本工资']}));
+
+  return {byField, overallScore, issues:{abnormalAge, duplicates, badSalary}};
+}
+
+function calcOrgHealthScore(turnRate, avgPerf, radarScores, dqScore){
+  const radarAvg = avg(radarScores);
+  const score = Math.round(radarAvg*0.7 + dqScore*0.3);
+  let grade,color;
+  if(score>=85){grade='A';color='var(--success)';}
+  else if(score>=70){grade='B';color='var(--primary)';}
+  else if(score>=55){grade='C';color='var(--warning)';}
+  else{grade='D';color='var(--danger)';}
+  return {score, grade, color};
+}
+
+function renderDiagnostics(data, active, left){
+  const dqFields=['员工编号','姓名','性别','年龄','学历','部门','岗位','入职日期','在职状态','绩效评分','基本工资'];
+  const dq = calcDataQuality(data, dqFields);
+  const perfData = active.filter(r=>r['绩效评分']!==''&&r['绩效评分']!==undefined);
+  const avgPerf = perfData.length ? avg(perfData.map(r=>parseFloat(r['绩效评分'])||0)) : 0;
+  const turnRate = pct(left.length, data.length);
+  const radarScores = calcRiskScores(turnRate, avgPerf, active, left, dq.overallScore);
+  const healthScore = calcOrgHealthScore(turnRate, avgPerf, radarScores, dq.overallScore);
+  const hasPersonaCols = hasCol(active,'绩效评分')&&hasCol(active,'入职日期');
+  const persona = hasPersonaCols ? calcPersonaMatrix(active) : null;
+  renderRiskRadar(radarScores);
+  renderOrgHealthScore(healthScore, radarScores);
+  if(persona) renderPersonaSection(persona, active);
+  else document.getElementById('persona-kpis').innerHTML='<div class="no-data-notice"><div class="ndi">📭</div><div class="ndt">'+noData('绩效评分/入职日期').replace(/<[^>]+>/g,'')+'</div></div>';
+  renderDataQualityBlock(dq, 'cb-dq');
+  renderOrgReport(data, active, left, {healthScore, radarScores, persona, dq, avgPerf, turnRate});
+}
+
+function renderRiskRadar(scores){
+  const el = document.getElementById('cb-risk-radar');
+  if(!el) return;
+  if(!document.getElementById('ch-risk-radar')){
+    el.innerHTML='<div class="chart-wrap"><canvas id="ch-risk-radar"></canvas></div>';
+  }
+  mkChart('ch-risk-radar',{
+    type:'radar',
+    data:{
+      labels:[t('radar.dim1'),t('radar.dim2'),t('radar.dim3'),t('radar.dim4'),t('radar.dim5')],
+      datasets:[{
+        data:scores,fill:true,
+        backgroundColor:'rgba(37,99,235,.12)',
+        borderColor:'#2563EB',pointBackgroundColor:'#2563EB',pointRadius:4
+      }]
+    },
+    options:{
+      ...baseOpts,
+      scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:10}},pointLabels:{font:{size:11}}}},
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+
+function renderOrgHealthScore(healthScore, radarScores){
+  const el = document.getElementById('cb-org-health');
+  if(!el) return;
+  const dimNames=[t('radar.dim1'),t('radar.dim2'),t('radar.dim3'),t('radar.dim4'),t('radar.dim5')];
+  const gradeLabel = t('health.grade.'+healthScore.grade.toLowerCase());
+  const dimBars = dimNames.map((name,i)=>{
+    const v=radarScores[i];
+    const cls=v>=75?'prog-ok':v>=50?'prog-warn':'prog-bad';
+    return`<div class="health-dim-row"><div class="health-dim-lbl">${name}</div><div class="dq-bar-w"><div class="prog"><div class="prog-bar ${cls}" style="width:${v}%"></div></div></div><div class="health-dim-val" style="color:${v>=75?'var(--success)':v>=50?'var(--warning)':'var(--danger)'}">${v}</div></div>`;
+  }).join('');
+  el.innerHTML=`<div class="health-score-display"><div class="health-score-num" style="color:${healthScore.color}">${healthScore.score}</div><div class="health-score-grade" style="color:${healthScore.color}">${gradeLabel}</div><div class="health-score-sub">${state.lang==='zh'?'综合组织健康指数':'Overall Org Health Index'}</div><div class="health-dim-list">${dimBars}</div></div>`;
+}
+
+function renderPersonaSection(persona, active){
+  const total = active.length||1;
+  const quads=[
+    {k:'HH',cls:'pq-hh',icon:'🌟',dk:'persona.hh',dsk:'persona.hh.desc'},
+    {k:'HL',cls:'pq-hl',icon:'🚀',dk:'persona.hl',dsk:'persona.hl.desc'},
+    {k:'LH',cls:'pq-lh',icon:'😴',dk:'persona.lh',dsk:'persona.lh.desc'},
+    {k:'LL',cls:'pq-ll',icon:'👀',dk:'persona.ll',dsk:'persona.ll.desc'}
+  ];
+  const kpiEl=document.getElementById('persona-kpis');
+  const tblEl=document.getElementById('persona-table-wrap');
+  if(!kpiEl||!tblEl) return;
+  kpiEl.innerHTML='<div class="persona-grid">'+quads.map(q=>{
+    const members=persona[q.k];
+    const cnt=members.length;
+    // top 3 by perf score
+    const top3=members.slice().sort((a,b)=>(parseFloat(b['绩效评分'])||0)-(parseFloat(a['绩效评分'])||0)).slice(0,3);
+    const hint=top3.length?top3.map(r=>`${r['姓名']}（${r['部门']||''}）`).join('、'):'—';
+    return`<div class="persona-quad ${q.cls}"><div class="persona-quad-icon">${q.icon}</div><div class="persona-quad-title">${t(q.dk)}</div><div class="persona-quad-count">${cnt}</div><div class="persona-quad-sub">${t(q.dsk)}</div><div class="persona-dept-hint">${state.lang==='zh'?'代表人物:':'Top:'}${hint}</div></div>`;
+  }).join('')+'</div>';
+  // Summary table
+  const rows=quads.map(q=>`<tr><td>${q.icon} ${t(q.dk)}</td><td>${t(q.dsk)}</td><td style="font-weight:700">${persona[q.k].length}</td><td>${pct(persona[q.k].length,total)}%</td></tr>`).join('');
+  tblEl.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>${state.lang==='zh'?'群体':'Group'}</th><th>${state.lang==='zh'?'特征':'Profile'}</th><th>${state.lang==='zh'?'人数':'Count'}</th><th>${state.lang==='zh'?'占比':'Share'}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderDataQualityBlock(dq, containerId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  let html='<div class="dq-section-title">'+t('dq.missing.fields')+'</div>';
+  Object.entries(dq.byField).forEach(([field,rate])=>{
+    const cls=rate>=95?'prog-ok':rate>=80?'prog-warn':'prog-bad';
+    const col=rate>=95?'var(--success)':rate>=80?'var(--warning)':'var(--danger)';
+    html+=`<div class="dq-row"><div class="dq-field">${field}</div><div class="dq-bar-w"><div class="prog"><div class="prog-bar ${cls}" style="width:${rate}%"></div></div></div><div class="dq-pct" style="color:${col}">${rate}%</div></div>`;
+  });
+  html+='<div class="dq-section-title" style="margin-top:18px">'+t('dq.abnormal')+'</div>';
+  const {abnormalAge,duplicates,badSalary}=dq.issues;
+  const hasIssues=abnormalAge.length||duplicates.length||badSalary.length;
+  if(!hasIssues){
+    html+=`<div class="dq-ok">${t('dq.all.ok')}</div>`;
+  } else {
+    if(abnormalAge.length){
+      html+=`<ul class="dq-issue-list">`+abnormalAge.map(a=>`<li>${state.lang==='zh'?'异常年龄':'Abnormal age'}: <b>${a.name}</b> (${a.age}${state.lang==='zh'?'岁':'yr'})</li>`).join('')+'</ul>';
+    }
+    if(duplicates.length){
+      html+=`<ul class="dq-issue-list">`+duplicates.map(d=>`<li>${state.lang==='zh'?'重复员工编号':'Duplicate ID'}: <b>${d.id}</b> × ${d.count}</li>`).join('')+'</ul>';
+    }
+    if(badSalary.length){
+      html+=`<ul class="dq-issue-list">`+badSalary.map(b=>`<li>${state.lang==='zh'?'不合理薪资':'Invalid salary'}: <b>${b.name}</b> (¥${b.base})</li>`).join('')+'</ul>';
+    }
+  }
+  el.innerHTML=html;
+}
+
+function renderOrgReport(data, active, left, metrics){
+  const el = document.getElementById('org-report-body');
+  if(!el) return;
+  const {healthScore, radarScores, persona, dq, avgPerf, turnRate} = metrics;
+  const zh = state.lang==='zh';
+  const th = getThresh();
+  const total = data.length;
+  const activeN = active.length;
+  const leftN = left.length;
+  const gradeLabel = t('health.grade.'+healthScore.grade.toLowerCase());
+
+  // Compute detail metrics for report
+  const perfData = active.filter(r=>r['绩效评分']!==''&&r['绩效评分']!==undefined);
+  const scoreA = perfData.filter(r=>(parseFloat(r['绩效评分'])||0)>=85).length;
+  const scoreWarn = perfData.filter(r=>(parseFloat(r['绩效评分'])||0)<th.perf).length;
+  const fields = Object.entries(dq.byField);
+  const fillRates = fields.map(([,v])=>v);
+  const avgFill = fillRates.length ? Math.round(avg(fillRates)) : 100;
+  const totalIssues = dq.issues.abnormalAge.length + dq.issues.duplicates.length + dq.issues.badSalary.length;
+  const highPerfLeftN = left.filter(r=>(parseFloat(r['绩效评分'])||0)>=75).length;
+  const highPerfLeftPct = leftN>0 ? pct(highPerfLeftN, leftN) : 0;
+  const deptMap={};
+  active.forEach(r=>{if(r['部门']){deptMap[r['部门']]=(deptMap[r['部门']]||0)+1;}});
+  const sortedDepts=Object.entries(deptMap).sort((a,b)=>b[1]-a[1]);
+
+  // Warn dept by perf
+  const depts=[...new Set(active.map(r=>r['部门']))].filter(Boolean);
+  const warnDepts=[];
+  if(perfData.length){
+    depts.forEach(d=>{
+      const s=perfData.filter(r=>r['部门']===d);
+      if(s.length){const a=avg(s.map(r=>parseFloat(r['绩效评分'])||0));if(a<th.deptPerf)warnDepts.push(`${d}(${a.toFixed(0)}${zh?'分':'pts'})`);}
+    });
+  }
+
+  // Score overview sentence
+  const overview = zh
+    ? `综合组织健康指数为 <span class="num">${healthScore.score}</span> 分（${gradeLabel}），基于留任健康、绩效水平、梯队活力、人才保留、数据质量5个维度综合评估。`
+    : `Overall org health score is <span class="num">${healthScore.score}</span> (${gradeLabel}), across 5 dimensions: Retention, Performance, Talent Pipeline, Top Talent Retention, and Data Quality.`;
+
+  // Strengths
+  const strengths=[];
+  // Strength: headcount & turnover
+  if(turnRate<=th.turnover){
+    strengths.push(zh
+      ? `在职员工共 <span class="num">${activeN}</span> 人，离职率 <span class="num ok-text">${turnRate}%</span>，低于警戒线（${th.turnover}%），整体人员稳定性良好。`
+      : `Active headcount: <span class="num">${activeN}</span>. Turnover rate <span class="num ok-text">${turnRate}%</span> is below the alert threshold (${th.turnover}%), indicating stable workforce.`);
+  }
+  // Strength: avg performance
+  if(avgPerf>=th.deptPerf&&perfData.length>0){
+    strengths.push(zh
+      ? `绩效评分均值 <span class="num">${avgPerf.toFixed(1)}</span> 分，A级高绩效员工 <span class="num">${scoreA}</span> 人（占在职 <span class="num">${pct(scoreA,activeN)}%</span>），整体绩效表现稳健。`
+      : `Average performance score <span class="num">${avgPerf.toFixed(1)}</span>. Grade-A employees: <span class="num">${scoreA}</span> (<span class="num">${pct(scoreA,activeN)}%</span> of active headcount).`);
+  }
+  // Strength: data quality
+  if(dq.overallScore>=80){
+    strengths.push(zh
+      ? `数据质量得分 <span class="num">${dq.overallScore}</span> 分，字段平均填充率 <span class="num">${avgFill}%</span>${totalIssues===0?'，未发现数据异常':''}。`
+      : `Data quality score <span class="num">${dq.overallScore}</span> with average field fill rate <span class="num">${avgFill}%</span>${totalIssues===0?', no anomalies detected':''}.`);
+  }
+  // Strength: talent pipeline
+  if(radarScores[2]>=60&&persona&&persona.HL.length>0){
+    strengths.push(zh
+      ? `梯队活力得分 <span class="num">${radarScores[2]}</span> 分，高绩效新员工（潜力新星）共 <span class="num">${persona.HL.length}</span> 人，人才梯队后备充足。`
+      : `Talent Pipeline score <span class="num">${radarScores[2]}</span>. Rising Stars (high-perf, short tenure): <span class="num">${persona.HL.length}</span> people — good pipeline depth.`);
+  }
+
+  // Risks (only triggered when genuine)
+  const risks=[];
+  // Risk: high turnover
+  if(turnRate>th.turnover){
+    risks.push(zh
+      ? `离职率 <span class="num warn-text">${turnRate}%</span> 超过警戒线（${th.turnover}%），共离职 <span class="num">${leftN}</span> 人${highPerfLeftN>0?`，其中高绩效离职 <span class="num">${highPerfLeftN}</span> 人（占离职人数 <span class="num warn-text">${highPerfLeftPct}%</span>）`:''}`+'。'
+      : `Turnover rate <span class="num warn-text">${turnRate}%</span> exceeds threshold (${th.turnover}%). Total departed: <span class="num">${leftN}</span>${highPerfLeftN>0?`, including <span class="num">${highPerfLeftN}</span> high performers (<span class="num warn-text">${highPerfLeftPct}%</span> of leavers)`:''}.`);
+  }
+  // Risk: low avg performance
+  if(avgPerf<th.deptPerf&&perfData.length>0){
+    risks.push(zh
+      ? `绩效均值 <span class="num warn-text">${avgPerf.toFixed(1)}</span> 分低于基准线（${th.deptPerf}分），预警人员共 <span class="num">${scoreWarn}</span> 人（占在职 <span class="num">${pct(scoreWarn,activeN)}%</span>）${warnDepts.length?`，重点关注：${warnDepts.join('、')}`:''}。`
+      : `Avg performance <span class="num warn-text">${avgPerf.toFixed(1)}</span> pts below baseline (${th.deptPerf}). <span class="num">${scoreWarn}</span> employees under alert threshold (${pct(scoreWarn,activeN)}% of active)${warnDepts.length?`, focus on: ${warnDepts.join(', ')}`:''}. `);
+  }
+  // Risk: data quality issues
+  if(totalIssues>0){
+    const iss=[];
+    if(dq.issues.abnormalAge.length) iss.push(zh?`年龄异常 ${dq.issues.abnormalAge.length} 条`:`${dq.issues.abnormalAge.length} abnormal ages`);
+    if(dq.issues.duplicates.length) iss.push(zh?`重复员工 ${dq.issues.duplicates.length} 组`:`${dq.issues.duplicates.length} duplicate IDs`);
+    if(dq.issues.badSalary.length) iss.push(zh?`薪资异常 ${dq.issues.badSalary.length} 条`:`${dq.issues.badSalary.length} salary issues`);
+    risks.push(zh
+      ? `发现数据异常 <span class="num warn-text">${totalIssues}</span> 条（${iss.join('、')}），字段平均填充率 <span class="num">${avgFill}%</span>，建议及时核实清洗。`
+      : `Detected <span class="num warn-text">${totalIssues}</span> data anomalies (${iss.join(', ')}). Average field fill rate: <span class="num">${avgFill}%</span>. Recommend data cleansing.`);
+  }
+  // Risk: talent retention risk
+  if(highPerfLeftN>0&&turnRate<=th.turnover){
+    risks.push(zh
+      ? `近期离职员工中高绩效人员占 <span class="num warn-text">${highPerfLeftPct}%</span>（共 <span class="num">${highPerfLeftN}</span> 人），需警惕优秀人才流失风险。`
+      : `<span class="num warn-text">${highPerfLeftPct}%</span> of leavers were high performers (<span class="num">${highPerfLeftN}</span> people) — monitor top talent retention risk.`);
+  }
+
+  // Actions (data-driven, correspond to risks; fallback to general growth)
+  const actions=[];
+  if(turnRate>th.turnover){
+    actions.push(zh
+      ? `建议对近 <span class="num">${leftN}</span> 名离职员工开展离职访谈复盘，重点排查${sortedDepts.length?`人数最多的 <b>${sortedDepts[0][0]}</b>（${sortedDepts[0][1]}人）`:''}等核心部门管理问题，优化薪酬结构与晋升通道。`
+      : `Conduct exit interviews for the <span class="num">${leftN}</span> departed employees. Prioritize${sortedDepts.length?` <b>${sortedDepts[0][0]}</b> (${sortedDepts[0][1]} people)`:''} and other key departments. Review pay structure and career paths.`);
+  }
+  if(scoreWarn>0){
+    actions.push(zh
+      ? `建议对绩效低于 ${th.perf} 分的 <span class="num">${scoreWarn}</span> 名员工制定个人绩效改进计划（PIP）${warnDepts.length?`，重点关注 <b>${warnDepts.join('、')}</b>`:''}`+'，并由直属主管跟进辅导。'
+      : `Implement performance improvement plans (PIP) for the <span class="num">${scoreWarn}</span> employees below ${th.perf} pts${warnDepts.length?`, especially in <b>${warnDepts.join(', ')}</b>`:''}.`);
+  }
+  if(totalIssues>0){
+    actions.push(zh
+      ? `建议 HR 专员排查 <span class="num">${totalIssues}</span> 条数据异常（${dq.issues.abnormalAge.length?`年龄异常${dq.issues.abnormalAge.length}条、`:''}${dq.issues.duplicates.length?`重复员工${dq.issues.duplicates.length}组、`:''}${dq.issues.badSalary.length?`薪资异常${dq.issues.badSalary.length}条`:''}），核实后更新系统数据。`
+      : `HR should audit <span class="num">${totalIssues}</span> data anomalies and update system records.`);
+  }
+  if(persona&&persona.HL.length>0){
+    actions.push(zh
+      ? `建议为潜力新星群体（<span class="num">${persona.HL.length}</span> 名高绩效短司龄员工）制定加速培养路径，搭配资深员工导师制，降低早期流失风险。`
+      : `Design accelerated development paths for <span class="num">${persona.HL.length}</span> Rising Stars (high-perf, new hires). Pair with senior mentors to reduce early attrition.`);
+  }
+  if(actions.length<2){
+    actions.push(zh
+      ? `建议持续优化绩效反馈机制，提高核心骨干（<span class="num">${persona?persona.HH.length:0}</span> 人）的参与感与薪酬竞争力，保持组织活力。`
+      : `Continuously improve performance feedback. Strengthen engagement and compensation for the <span class="num">${persona?persona.HH.length:0}</span> Core Pillars to sustain org vitality.`);
+  }
+
+  const mkSection=(title,items)=>`<h5>${title}</h5><ul>${items.map(s=>`<li>${s}</li>`).join('')}</ul>`;
+  let html=`<p style="margin-bottom:12px">${overview}</p>`;
+  html+=mkSection(t('report.strength'), strengths.length?strengths:[zh?'暂无显著优势数据':'Insufficient data for strengths']);
+  html+=mkSection(t('report.risk'), risks.length?risks:[zh?`✅ 暂无触发风险预警（各指标均在正常区间内）`:'✅ No triggered risk alerts — all metrics within normal range']);
+  html+=mkSection(t('report.action'), actions.length?actions:[zh?'建议保持当前策略，定期回顾组织健康指标。':'Maintain current strategy and conduct regular org health reviews.']);
+  el.innerHTML=html;
+}
+
+function copyOrgReport(){
+  const el=document.getElementById('org-report-body');
+  if(!el)return;
+  const text=el.innerText;
+  const btn=document.getElementById('btn-copy-report');
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btn){const orig=btn.innerHTML;btn.style.color='var(--success)';btn.innerHTML='✅ '+(state.lang==='zh'?'已复制':'Copied');setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},2000);}
+  }).catch(()=>{
+    // Fallback
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    if(btn){const orig=btn.innerHTML;btn.style.color='var(--success)';btn.innerHTML='✅ '+(state.lang==='zh'?'已复制':'Copied');setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},2000);}
+  });
+}
+
+function renderChannelConvChart(data){
+  const channels=[...new Set(data.map(r=>r['招聘渠道']).filter(Boolean))];
+  if(!channels.length)return;
+  const interviewed=data.filter(r=>r['是否面试']==='是');
+  const iRates=[],hRates=[];
+  channels.forEach(ch=>{
+    const sub=data.filter(r=>r['招聘渠道']===ch);
+    const iv=sub.filter(r=>r['是否面试']==='是').length;
+    const pass=sub.filter(r=>r['面试结果']==='通过').length;
+    const hire=sub.filter(r=>r['是否录用']==='是').length;
+    iRates.push(iv>0?Math.round(pass/iv*100):0);
+    hRates.push(pass>0?Math.round(hire/pass*100):0);
+  });
+  const el=document.getElementById('cb-channel-conv');
+  if(!el)return;
+  if(!document.getElementById('ch-channel-conv')){
+    el.innerHTML='<div class="chart-wrap h320"><canvas id="ch-channel-conv"></canvas></div>';
+  }
+  mkChart('ch-channel-conv',barCfg(channels,[
+    {label:state.lang==='zh'?'面试通过率':'Interview Pass Rate',data:iRates,backgroundColor:'#2563EB'},
+    {label:state.lang==='zh'?'录用率':'Hire Rate',data:hRates,backgroundColor:'#7C3AED'}
+  ],{scales:{x:{grid:{display:false}},y:{min:0,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#F1F5F9'}}}}));
+}
+
+function renderRecruitDiagnostics(data){
+  const rDqFields=['姓名','性别','年龄','学历','应聘部门','招聘渠道','是否面试','面试结果','是否录用'];
+  renderDataQualityBlock(calcDataQuality(data, rDqFields),'cb-r-dq');
+  if(hasCol(data,'招聘渠道')) renderChannelConvChart(data);
+}
+
+// ═══ Settings ═══
+function applyThresholds(){
+  state.thresholds={arrival:+document.getElementById('th-arrival').value,retain:+document.getElementById('th-retain').value,interview:+document.getElementById('th-interview').value,hire:+document.getElementById('th-hire').value,turnover:+document.getElementById('th-turnover').value,perf:+document.getElementById('th-perf').value,deptPerf:+document.getElementById('th-dept-perf').value,salaryRatio:+document.getElementById('th-salary-ratio').value};
+  if(state.recruit)renderRecruitDashboard();
+  if(state.emp)renderEmpDashboard();
+  alert(state.lang==='zh'?'✅ 阈值已应用，已重新分析！':'✅ Thresholds applied and data re-analyzed!');
+}
+
+// ═══ Init ═══
+(function(){
+  const d=new Date();
+  document.getElementById('hdr-date').textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+})();
+</script>
+</body>
+</html>
