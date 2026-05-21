@@ -1550,7 +1550,9 @@ function renderChannelConvChart(data){
 }
 
 function renderRecruitDiagnostics(data){
-  const rDqFields=['姓名','性别','年龄','学历','应聘部门','招聘渠道','是否面试','面试结果','是否录用'];
+  // Only check fields that should be filled for ALL candidates
+  // Exclude conditional fields: 面试结果 (only for interviewed), 实际到岗日期/是否在职 (only for hired)
+  const rDqFields=['姓名','性别','年龄','学历','应聘部门','招聘渠道','是否面试','是否录用'];
   const dq=calcDataQuality(data, rDqFields);
   // Recruitment records are candidates — duplicate names are normal, suppress false positives
   dq.issues.duplicates=[];
